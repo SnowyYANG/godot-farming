@@ -1,4 +1,4 @@
-# Godot Farming Game
+# Godot FarmingGame Example
 
 A small pixel-art farming game made with Godot: till the soil, plant seeds, water them and harvest.
 
