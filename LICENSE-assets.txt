@@ -1,0 +1,50 @@
+Asset licenses for this project
+===============================
+
+Project source code is GPL-3.0 (see LICENSE). The art used by the project is
+third party and keeps its own license, listed below.
+
+Farm RPG - Tiny Asset Pack - (All in One) - EmanuelleDev
+--------------------------------------------------------
+https://emanuelledev.itch.io
+
+Files in this repository taken from the pack:
+  assets/sprites/Spring Crops.png
+  assets/tilesets/Tileset Grass Spring.png
+  assets/tilesets/Tilled Soil and wet soil.png
+  assets/icons/Crops.png
+  assets/icons/icon.png
+
+License, as shipped in the pack's Documentation.txt:
+
+  These asset packs can be used in any commercial or non-commercial project.
+  You are free to modify the assets as you like.
+  However, these asset packs cannot be resold or redistributed, even if modified.
+
+  Credits are mandatory: You can credit me by linking to my Itch.io page: emanuelledev.itch.io.
+
+  You can be credited as "EmanuelleDev".
+
+  Additionally, I'd love to share your project on my Itch.io page!
+  Please let me know if you create something with these assets so I can play and share it!
+
+  - farmrpgassetpack@gmail.com
+
+In short: use in this game (including commercial use) is allowed, modifying the
+art is allowed, credit "EmanuelleDev" with a link to emanuelledev.itch.io is
+required, and the asset pack itself (original or modified) must not be resold or
+redistributed as assets.
+
+Godot Engine default project icon
+---------------------------------
+  icon.svg
+
+Godot Engine's default project icon, MIT licensed. Copyright (c) 2014-2026
+Godot Engine contributors, copyright (c) 2007-2014 Juan Linietsky, Ariel Manzur.
+
+"Edit Resources as Table" editor plugin
+---------------------------------------
+  addons/resources_spreadsheet_view/
+
+MIT License, Copyright 2022 Gennady "Don Tnowe" Krupenyov - full text in
+addons/resources_spreadsheet_view/LICENSE.md.
