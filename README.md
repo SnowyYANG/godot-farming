@@ -28,7 +28,7 @@ Pick a tool at the bottom left, then left click a tile on the field:
 
 ## Download
 
-Alpha builds for Windows (64-bit) are attached to the [latest release](../../releases/latest).
+Prototype builds for Windows (64-bit) are attached to the [releases page](../../releases).
 
 ## Running from source
 
