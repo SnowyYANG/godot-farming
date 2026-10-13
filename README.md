@@ -36,7 +36,7 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 
 ## About
 
-* **Program**: [Snowy](mailto:snowyyang@outlook.com)
+* **Program**: Kottalo
 * **Art**: [EmanuelleDev](https://emanuelledev.itch.io) - Farm RPG - Tiny Asset Pack
 * **Engine**: [Godot Engine 4.7](https://godotengine.org)
 * **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov (MIT, see [LICENSE](addons/resources_spreadsheet_view/LICENSE.md))
