@@ -1,0 +1,27 @@
+[gd_scene format=3 uid="uid://baefomkr7mw8d"]
+
+[ext_resource type="Script" uid="uid://dbf1mv13ahwth" path="res://prefabs/stock_label/stock_label.gd" id="1_anf3a"]
+[ext_resource type="Texture2D" uid="uid://derqjta52w0dy" path="res://assets/sprites/Spring Crops.png" id="1_lf24d"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_t36vy"]
+atlas = ExtResource("1_lf24d")
+region = Rect2(112, 16, 16, 16)
+
+[node name="StockLabel" type="HBoxContainer" unique_id=398078943 node_paths=PackedStringArray("rect_icon", "label_number")]
+script = ExtResource("1_anf3a")
+rect_icon = NodePath("Icon")
+label_number = NodePath("Label_Number")
+
+[node name="Icon" type="TextureRect" parent="." unique_id=1763412807]
+custom_minimum_size = Vector2(12, 12)
+layout_mode = 2
+texture = SubResource("AtlasTexture_t36vy")
+expand_mode = 1
+
+[node name="Label_Number" type="RichTextLabel" parent="." unique_id=1573524532]
+custom_minimum_size = Vector2(32, 0)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 8
+text = "0"
+autowrap_mode = 0
+vertical_alignment = 1

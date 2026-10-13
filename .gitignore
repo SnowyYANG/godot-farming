@@ -1,0 +1,11 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+build
+*.zip
+# editor / OS junk (never commit these)
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
+*.bak

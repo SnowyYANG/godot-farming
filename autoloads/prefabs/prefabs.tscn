@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://ch3nj8w4hovpw"]
+
+[ext_resource type="Script" uid="uid://db3nypqomrevj" path="res://autoloads/prefabs/prefabs.gd" id="1_404k7"]
+[ext_resource type="PackedScene" uid="uid://cwmhrb3whjqws" path="res://prefabs/tool_selection/tool_selection.tscn" id="2_lljyl"]
+[ext_resource type="PackedScene" uid="uid://b54pneguau7pt" path="res://prefabs/crop/crop.tscn" id="3_6ypgs"]
+[ext_resource type="PackedScene" uid="uid://baefomkr7mw8d" path="res://prefabs/stock_label/stock_label.tscn" id="4_nhaaj"]
+
+[node name="Prefabs" type="Node" unique_id=1165209660]
+script = ExtResource("1_404k7")
+tool_selection = ExtResource("2_lljyl")
+crop = ExtResource("3_6ypgs")
+stock_label = ExtResource("4_nhaaj")

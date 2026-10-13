@@ -1,0 +1,81 @@
+[gd_scene format=3 uid="uid://cwmhrb3whjqws"]
+
+[ext_resource type="Script" uid="uid://ckps02pkk21lq" path="res://prefabs/tool_selection/tool_selection.gd" id="1_4p8df"]
+[ext_resource type="Texture2D" uid="uid://bvuln6ndjsh8f" path="res://assets/icons/icon.png" id="1_m3erp"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4p8df"]
+bg_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r3glv"]
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7qsjq"]
+bg_color = Color(1, 1, 1, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 1)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4p8df"]
+atlas = ExtResource("1_m3erp")
+region = Rect2(0, 0, 16, 16)
+
+[node name="ToolSelection" type="PanelContainer" unique_id=1804666492 node_paths=PackedStringArray("rect_icon", "select_frame", "hover_frame")]
+custom_minimum_size = Vector2(16, 16)
+theme_override_styles/panel = SubResource("StyleBoxFlat_4p8df")
+script = ExtResource("1_4p8df")
+rect_icon = NodePath("Control/Icon")
+select_frame = NodePath("Control/SelectFrame")
+hover_frame = NodePath("Control/HoverFrame")
+
+[node name="Control" type="Control" parent="." unique_id=493516830]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="SelectFrame" type="PanelContainer" parent="Control" unique_id=187946230]
+visible = false
+modulate = Color(0.36282945, 0.36282945, 0.36282945, 1)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_r3glv")
+
+[node name="HoverFrame" type="PanelContainer" parent="Control" unique_id=1781283164]
+visible = false
+modulate = Color(0, 0, 0, 0.09019608)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -2.0
+offset_top = -2.0
+offset_right = 2.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_7qsjq")
+
+[node name="Icon" type="TextureRect" parent="Control" unique_id=217448831]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 0
+offset_right = 16.0
+offset_bottom = 16.0
+mouse_filter = 2
+texture = SubResource("AtlasTexture_4p8df")
+expand_mode = 1
+stretch_mode = 6
