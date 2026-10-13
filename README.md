@@ -2,7 +2,7 @@
 
 A small pixel-art farming game made with Godot: till the soil, plant seeds, water them and harvest.
 
-![screenshot](docs/screenshot.png)
+![screenshot](docs/screenshot.jpg)
 
 ## Features
 

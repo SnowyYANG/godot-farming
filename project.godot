@@ -25,8 +25,8 @@ resources_spreadsheet_view/freeze_first_column=true
 
 config/name="zhongtian"
 run/main_scene="uid://wpk768em82ti"
-config/icon="res://icon.svg"
 config/features=PackedStringArray("4.7", "GL Compatibility")
+config/icon="res://icon.svg"
 
 [autoload]
 
