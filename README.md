@@ -37,8 +37,7 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 ## About
 
 * **Program**: Kottalo
-* **Art**: [EmanuelleDev](https://emanuelledev.itch.io) - Farm RPG - Tiny Asset Pack
-* **Engine**: [Godot Engine 4.7](https://godotengine.org)
+* **Art**: [MaeveDevs](https://maevedevs.itch.io/) - Farm RPG - Tiny Asset Pack
 * **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov (MIT, see [LICENSE](addons/resources_spreadsheet_view/LICENSE.md))
 
 ## License
@@ -48,3 +47,7 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
   - **Art** (*.png* - tilesets, crops, tool icons): [Farm RPG - Tiny Asset Pack](https://emanuelledev.itch.io) by **EmanuelleDev** - free for commercial and non-commercial use, modification allowed, resale and redistribution of the assets **not** allowed, credit is mandatory → [LICENSE-assets.txt](LICENSE-assets.txt)
   - **Project icon** (*icon.svg*): Godot Engine's default project icon (MIT)
   - **Editor addon** (*addons/resources_spreadsheet_view/*): MIT, © 2022 Gennady "Don Tnowe" Krupenyov
+
+## Acknowledgments
+
+* **Engine**: [Godot Engine 4.7](https://godotengine.org)
