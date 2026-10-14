@@ -50,4 +50,4 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 
 ## Acknowledgments
 
-* **Engine**: [Godot Engine 4.7](https://godotengine.org)
+* [Godot Engine](https://godotengine.org)
