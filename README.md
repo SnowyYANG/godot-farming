@@ -28,7 +28,7 @@ Pick a tool at the bottom left, then left click a tile on the field:
 
 ## Download
 
-Prototype builds for Windows (64-bit) are attached to the [releases page](../../releases).
+Builds for Windows (x64) are attached to the [releases page](../../releases).
 
 ## Running from source
 
