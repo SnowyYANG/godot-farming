@@ -17,6 +17,22 @@ var watered: bool:
 		return Game.map_wet_soil.get_cell_tile_data(coord) != null
 
 
+## 非种子阶段整体上移 8px：素材里苗/成熟株画在 16x16 格的下半部分，
+## 不抬起来会看着陷进土里。第 0 帧（种子）保持贴地。
+const GROWN_OFFSET_Y := -8.0
+
+
+func _ready() -> void:
+	frame_changed.connect(_update_offset)
+	animation_changed.connect(_update_offset)
+	_update_offset()
+
+
+func _update_offset() -> void:
+	var is_seed := data != null and animation == data.name and frame == 0
+	offset.y = 0.0 if is_seed else GROWN_OFFSET_Y
+
+
 ## 由 Game 在种植时调用。各阶段的帧预置在 crop.tscn 的 SpriteFrames 里（编辑器可见），
 ## 这里只负责切到对应作物的动画。
 func setup(crop_data: CropData, cell: Vector2i) -> void:
@@ -122,6 +138,7 @@ func _spawn_absorb_ghost() -> void:
 
 	var ghost := Sprite2D.new()
 	ghost.texture = texture
+	ghost.offset = Vector2(0, offset.y)
 	ghost.global_position = global_position
 	ghost.z_index = z_index + 1
 	Game.crop_pool.add_child(ghost)
