@@ -168,6 +168,9 @@ func _clamp_offset() -> void:
 	var v := Vector2(view.size)
 	world_offset.x = clamp(world_offset.x, v.x - field_rect.end.x, -field_rect.position.x)
 	world_offset.y = clamp(world_offset.y, v.y - field_rect.end.y, -field_rect.position.y)
+	# 真正把平移量作用到世界上，否则输入按 world_offset 算、画面却没动，点击就会错位
+	if world_root != null:
+		world_root.position = world_offset
 
 
 ## 屏幕坐标 → 世界坐标（子视口 + 平移量）
