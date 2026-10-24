@@ -94,7 +94,7 @@ tool_type = 1
 [node name="Icon" parent="CanvasLayer/MarginContainer/Control/ToolSelectionPool/WaterCan/Control" parent_id_path=PackedInt32Array(1084947095, 493516830) index="2" unique_id=217448831]
 texture = SubResource("AtlasTexture_eow3j")
 
-[node name="SeedSelectionPool" type="VBoxContainer" parent="CanvasLayer/MarginContainer/Control" unique_id=2061636437]
+[node name="SeedSelectionPool" type="HBoxContainer" parent="CanvasLayer/MarginContainer/Control" unique_id=2061636437]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
@@ -118,7 +118,7 @@ step = 1.0
 value = 5.0
 show_percentage = false
 
-[node name="StockPool" type="VBoxContainer" parent="CanvasLayer/MarginContainer/Control" unique_id=66090649]
+[node name="StockPool" type="HBoxContainer" parent="CanvasLayer/MarginContainer/Control" unique_id=66090649]
 layout_mode = 0
 offset_right = 38.0
 offset_bottom = 23.0

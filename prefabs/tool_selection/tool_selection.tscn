@@ -4,23 +4,28 @@
 [ext_resource type="Texture2D" uid="uid://bvuln6ndjsh8f" path="res://assets/icons/icon.png" id="1_m3erp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4p8df"]
-bg_color = Color(1, 1, 1, 1)
+bg_color = Color(0.2, 0.148, 0.108, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.35, 0.262, 0.19, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_r3glv"]
 bg_color = Color(1, 1, 1, 0)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.95, 0.68, 0.3, 1)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_7qsjq"]
 bg_color = Color(1, 1, 1, 0)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.58, 0.44, 0.32, 1)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4p8df"]
 atlas = ExtResource("1_m3erp")
@@ -40,7 +45,6 @@ mouse_filter = 2
 
 [node name="SelectFrame" type="PanelContainer" parent="Control" unique_id=187946230]
 visible = false
-modulate = Color(0.36282945, 0.36282945, 0.36282945, 1)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -77,5 +81,5 @@ offset_right = 16.0
 offset_bottom = 16.0
 mouse_filter = 2
 texture = SubResource("AtlasTexture_4p8df")
-expand_mode = 1
-stretch_mode = 6
+expand_mode = 0
+stretch_mode = 0

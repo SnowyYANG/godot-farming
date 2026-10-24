@@ -14,7 +14,11 @@ func _ready() -> void:
 	_check("Grass 层有格子", Game.map_grass.get_used_cells().size() > 0,
 		"格子数 %d" % Game.map_grass.get_used_cells().size())
 
-	var coord: Vector2i = Game.map_grass.get_used_cells()[0]
+	var coord := Vector2i(-999, -999)
+	for c in Game.map_grass.get_used_cells():
+		if Game.is_tillable(c):
+			coord = c
+			break
 	var pos: Vector2 = Game.map_grass.map_to_local(coord)
 	print("\n测试格子: ", coord, "  世界坐标: ", pos)
 
@@ -54,6 +58,7 @@ func _ready() -> void:
 	for c in Game.map_grass.get_used_cells():
 		var right := c + Vector2i(1, 0)
 		if Game.map_grass.get_cell_source_id(right) != -1 \
+			and Game.is_tillable(c) and Game.is_tillable(right) \
 			and Game.map_soil.get_cell_source_id(c) == -1 \
 			and Game.map_soil.get_cell_source_id(right) == -1:
 			a = c
@@ -69,6 +74,60 @@ func _ready() -> void:
 		_check("锄相邻格后，原格瓦片立即更新", before_coords != after_coords,
 			"%s → %s" % [before_coords, after_coords])
 
+
+	# 7. 空土老化：连续 2 天没种植 → 长回草地
+	print("\n[空土 2 天老化]")
+	var empty_cell := Vector2i(-999, -999)
+	for c in Game.map_grass.get_used_cells():
+		if Game.map_soil.get_cell_source_id(c) == -1 and Game.is_tillable(c):
+			empty_cell = c
+			break
+	_select_tool(Enums.ToolType.HOE)
+	_click(Game.map_grass.map_to_local(empty_cell))
+	_check("锄地后有土", Game.map_soil.get_cell_source_id(empty_cell) != -1)
+	Game._end_day()
+	_check("第 1 天结束时土还在", Game.map_soil.get_cell_source_id(empty_cell) != -1)
+	Game._end_day()
+	_check("第 2 天结束时土消失（长回草地）", Game.map_soil.get_cell_source_id(empty_cell) == -1)
+	_check("该格草地还在", Game.map_grass.get_cell_source_id(empty_cell) != -1)
+	_check("计数已清理", not Game.empty_soil_days.has(empty_cell))
+
+	# 8. 种了东西的土不会老化
+	print("\n[种了作物不会老化]")
+	var planted_cell := Vector2i(-999, -999)
+	for c in Game.map_grass.get_used_cells():
+		if Game.map_soil.get_cell_source_id(c) == -1 and c != empty_cell and Game.is_tillable(c):
+			planted_cell = c
+			break
+	_click(Game.map_grass.map_to_local(planted_cell))
+	_select_tool(Enums.ToolType.SEED)
+	_click(Game.map_grass.map_to_local(planted_cell))
+	_check("已种下作物", Game.crop_dict.has(planted_cell))
+	for i in range(2):
+		_apply_water(planted_cell)
+		Game._end_day()
+	_check("两天后土仍在", Game.map_soil.get_cell_source_id(planted_cell) != -1)
+
+
+	# 9. 最外圈草地不能锄
+	print("\n[最外圈不可锄]")
+	var rect := Game.map_grass.get_used_rect()
+	var edge := rect.position
+	var inner := rect.position + Vector2i(1, 1)
+	_check("最外圈不可锄", not Game.is_tillable(edge), str(edge))
+	_check("向内一格可锄", Game.is_tillable(inner), str(inner))
+	_click(Game.map_grass.map_to_local(edge))
+	_check("对最外圈点击不出土", Game.map_soil.get_cell_source_id(edge) == -1)
+
+
+	# 10. 栏目区域点不出土
+	print("\n[栏目区域隔绝]")
+	var hud_y := get_viewport().get_visible_rect().size.y - Game.HUD_HEIGHT + 8.0
+	var probe := Vector2(8.0, hud_y)
+	var before := Game.map_soil.get_used_cells().size()
+	_click(probe)
+	_check("栏内点击不产生土", Game.map_soil.get_used_cells().size() == before)
+
 	print("\n=== 结果: %d 通过, %d 失败 ===" % [pass_count, fail_count])
 	get_tree().quit(0 if fail_count == 0 else 1)
 
@@ -82,11 +141,15 @@ func _select_tool(type: int) -> void:
 	push_error("找不到工具 type=%d" % type)
 
 
+func _apply_water(coord: Vector2i) -> void:
+	Game._apply_terrain(Game.map_wet_soil, coord, Game.TERRAIN_WET)
+
+
 func _click(world_pos: Vector2) -> void:
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = true
-	ev.position = world_pos
+	ev.position = Game.world_to_screen(world_pos)
 	Game._unhandled_input(ev)
 
 

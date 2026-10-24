@@ -13,15 +13,16 @@ rect_icon = NodePath("Icon")
 label_number = NodePath("Label_Number")
 
 [node name="Icon" type="TextureRect" parent="." unique_id=1763412807]
-custom_minimum_size = Vector2(12, 12)
+custom_minimum_size = Vector2(16, 16)
 layout_mode = 2
 texture = SubResource("AtlasTexture_t36vy")
-expand_mode = 1
+expand_mode = 0
 
-[node name="Label_Number" type="RichTextLabel" parent="." unique_id=1573524532]
-custom_minimum_size = Vector2(32, 0)
+[node name="Label_Number" type="Label" parent="." unique_id=1573524532]
+custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
-theme_override_font_sizes/normal_font_size = 8
+size_flags_horizontal = 0
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 8
 text = "0"
-autowrap_mode = 0
 vertical_alignment = 1

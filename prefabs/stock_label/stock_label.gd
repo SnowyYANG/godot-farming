@@ -2,7 +2,7 @@ class_name StockLabel
 extends HBoxContainer
 
 @export var rect_icon: TextureRect
-@export var label_number: RichTextLabel
+@export var label_number: Label
 
 var number: int:
 	set(value):
