@@ -128,6 +128,26 @@ func _ready() -> void:
 	_click(probe)
 	_check("栏内点击不产生土", Game.map_soil.get_used_cells().size() == before)
 
+
+	# 11. 换天不应该改动已有土壤的瓦片（autotile 别被重刷换样）
+	print("\n[换天不改瓦片]")
+	var bx := 8
+	var by := 8
+	for x in range(bx, bx + 4):
+		for y in range(by, by + 4):
+			Game._apply_terrain(Game.map_soil, Vector2i(x, y), Game.TERRAIN_SOIL)
+	await get_tree().process_frame
+	var atlas_before := {}
+	for cell in Game.map_soil.get_used_cells():
+		atlas_before[cell] = Game.map_soil.get_cell_atlas_coords(cell)
+	Game._end_day()
+	await get_tree().process_frame
+	var changed := 0
+	for cell in Game.map_soil.get_used_cells():
+		if atlas_before.has(cell) and atlas_before[cell] != Game.map_soil.get_cell_atlas_coords(cell):
+			changed += 1
+	_check("换天后瓦片不变", changed == 0, "变了 %d 格" % changed)
+
 	print("\n=== 结果: %d 通过, %d 失败 ===" % [pass_count, fail_count])
 	get_tree().quit(0 if fail_count == 0 else 1)
 

@@ -366,11 +366,11 @@ func _end_day() -> void:
 			to_clear.append(cell)
 		else:
 			empty_soil_days[cell] = days
+	# 擦除时 erase_soil 已经把每一格的八邻刷新过了，这里不要再整层重算：
+	# set_cells_terrain_connect 在有多个等价瓦片时会随机挑一个，
+	# 逐格刷新会让边缘瓦片天天换样（看着像 autotile 没更新）。
 	for cell in to_clear:
 		erase_soil(cell)
-
-	for cell in map_soil.get_used_cells():
-		map_soil.set_cells_terrain_connect([cell], 0, TERRAIN_SOIL)
 
 	day_changed.emit()
 
