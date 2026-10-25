@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://cwmhrb3whjqws" path="res://prefabs/tool_selection/tool_selection.tscn" id="4_fc0e3"]
 [ext_resource type="Texture2D" uid="uid://ddqm5sdra873y" path="res://assets/sprites/crops_veg.png" id="6_tools"]
 [ext_resource type="TileSet" uid="uid://cpuv51quckrea" path="res://tilesets/main_tileset.tres" id="8_u77e6"]
+[ext_resource type="AudioStream" uid="uid://ne33ry6m4rxa" path="res://assets/audio/farm.ogg" id="9_bgm"]
 [ext_resource type="Resource" uid="uid://bwfn63amikqak" path="res://data/crops/cabbage.tres" id="20_cabbage"]
 [ext_resource type="Resource" uid="uid://cgtau16rtnxwj" path="res://data/crops/mushroom.tres" id="21_mushroom"]
 [ext_resource type="Resource" uid="uid://bm5rbabisrkey" path="res://data/crops/radish.tres" id="22_radish"]
@@ -135,3 +136,9 @@ mouse_filter = 2
 
 [editable path="CanvasLayer/MarginContainer/Control/ToolSelectionPool/Hoe"]
 [editable path="CanvasLayer/MarginContainer/Control/ToolSelectionPool/WaterCan"]
+
+
+[node name="Bgm" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("9_bgm")
+volume_db = -6.0
+autoplay = true
