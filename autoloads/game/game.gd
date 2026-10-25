@@ -104,18 +104,99 @@ func _apply_terrain(layer: TileMapLayer, coord: Vector2i, terrain: int) -> void:
 	layer.set_cells_terrain_connect(cells, 0, terrain)
 
 
-## 把一格土连同湿土叠加一起除掉，并让周围重新算边缘（长回草地）
+## —— 擦除后的边缘重铺 ——
+## set_cells_terrain_connect 推断边界时读的是"周围瓦片自己存的 peering 位"，
+## 而不是"邻居到底还在不在"。一格土被擦掉后，邻格那一位仍然写着"有土"，
+## 空位又只贡献一个 -1 一起投票，1:1 打平时旧值赢 → 洞边上留着整块土，
+## 看上去就是 autotile 没按 peering 更新、拼错了。
+## 所以擦除后不再让引擎猜：这里按"八邻还在不在"直接算掩码，查表盖瓦片。
+const _TERRAIN_BITS := [
+	TileSet.CELL_NEIGHBOR_TOP_SIDE, TileSet.CELL_NEIGHBOR_RIGHT_SIDE,
+	TileSet.CELL_NEIGHBOR_BOTTOM_SIDE, TileSet.CELL_NEIGHBOR_LEFT_SIDE,
+	TileSet.CELL_NEIGHBOR_TOP_RIGHT_CORNER, TileSet.CELL_NEIGHBOR_BOTTOM_RIGHT_CORNER,
+	TileSet.CELL_NEIGHBOR_BOTTOM_LEFT_CORNER, TileSet.CELL_NEIGHBOR_TOP_LEFT_CORNER,
+]
+## 与 _TERRAIN_BITS 一一对应的邻居方向（y 轴向下，与 local_to_map 一致）
+const _TERRAIN_DIRS := [
+	Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0),
+	Vector2i(1, -1), Vector2i(1, 1), Vector2i(-1, 1), Vector2i(-1, -1),
+]
+## 角位索引 → 它两侧的边位索引。图集里只有"两边都通"的角瓦片，其余组合没有对应瓦片
+const _CORNER_NEEDS := {4: [0, 1], 5: [2, 1], 6: [2, 3], 7: [0, 3]}
+## terrain → { 八位掩码 : [source_id, atlas_coords] }
+var _terrain_tiles: Dictionary = {}
+
+
+## 从 TileSet 里扫出"掩码 → 瓦片"的对照表（不写死图集坐标，换美术也不用改代码）
+func _build_terrain_tiles() -> void:
+	if not _terrain_tiles.is_empty() or map_soil == null or map_soil.tile_set == null:
+		return
+	var ts := map_soil.tile_set
+	for i in ts.get_source_count():
+		var sid := ts.get_source_id(i)
+		var atlas := ts.get_source(sid) as TileSetAtlasSource
+		if atlas == null:
+			continue
+		for t in atlas.get_tiles_count():
+			var coords := atlas.get_tile_id(t)
+			var td := atlas.get_tile_data(coords, 0)
+			if td == null or td.terrain_set != 0 or td.terrain <= 0:
+				continue
+			var mask := 0
+			for k in _TERRAIN_BITS.size():
+				var bit: int = _TERRAIN_BITS[k]
+				if td.is_valid_terrain_peering_bit(bit) \
+					and td.get_terrain_peering_bit(bit) == td.terrain:
+					mask |= 1 << k
+			if not _terrain_tiles.has(td.terrain):
+				_terrain_tiles[td.terrain] = {}
+			_terrain_tiles[td.terrain][mask] = [sid, coords]
+
+
+func _canonical_mask(mask: int) -> int:
+	for c in _CORNER_NEEDS:
+		if mask & (1 << c) == 0:
+			continue
+		var sides: Array = _CORNER_NEEDS[c]
+		if mask & (1 << sides[0]) == 0 or mask & (1 << sides[1]) == 0:
+			mask &= ~(1 << c)
+	return mask
+
+
+## 按实际邻居重铺 coord 周围 3x3 里所有同地形的格子（擦除/新铺后用）
+func _retile_around(layer: TileMapLayer, coord: Vector2i, terrain: int) -> void:
+	_build_terrain_tiles()
+	var table: Dictionary = _terrain_tiles.get(terrain, {})
+	if table.is_empty():
+		return
+	for dx in range(-1, 2):
+		for dy in range(-1, 2):
+			var c := coord + Vector2i(dx, dy)
+			var td := layer.get_cell_tile_data(c)
+			if td == null or td.terrain != terrain:
+				continue
+			var mask := 0
+			for k in _TERRAIN_DIRS.size():
+				var ntd := layer.get_cell_tile_data(c + _TERRAIN_DIRS[k])
+				if ntd != null and ntd.terrain == terrain:
+					mask |= 1 << k
+			mask = _canonical_mask(mask)
+			if not table.has(mask):
+				continue  # 图集没有这个组合，保持原样比乱换一块好
+			var want: Array = table[mask]
+			if layer.get_cell_source_id(c) == want[0] and layer.get_cell_atlas_coords(c) == want[1]:
+				continue
+			layer.set_cell(c, want[0], want[1], 0)
+
+
+## 把一格土连同湿土叠加一起除掉，并让周围按 peering 重铺边缘（长回草地）
 func erase_soil(coord: Vector2i) -> void:
 	if map_wet_soil.get_cell_source_id(coord) != -1:
 		map_wet_soil.erase_cell(coord)
-		var wet_neighbors := _neighbor_cells(map_wet_soil, coord)
-		if not wet_neighbors.is_empty():
-			map_wet_soil.set_cells_terrain_connect(wet_neighbors, 0, TERRAIN_WET)
+		_retile_around(map_wet_soil, coord, TERRAIN_WET)
 	if map_soil.get_cell_source_id(coord) != -1:
 		map_soil.erase_cell(coord)
-		var soil_neighbors := _neighbor_cells(map_soil, coord)
-		if not soil_neighbors.is_empty():
-			map_soil.set_cells_terrain_connect(soil_neighbors, 0, TERRAIN_SOIL)
+		_retile_around(map_soil, coord, TERRAIN_SOIL)
 	empty_soil_days.erase(coord)
 
 
