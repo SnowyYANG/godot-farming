@@ -4,9 +4,14 @@ extends AnimatedSprite2D
 ## 连续不浇水多少天死亡（种子消失 / 苗枯萎）：同样等 2 天没水，第 3 天结算才死
 const DRY_DAYS_TO_DIE := 3
 
+## 成熟后放着不收获，第 3 天结算就过熟枯萎（和"2 天不管 → 第 3 天"的其它规则一致）
+const RIPE_DAYS_TO_WITHER := 3
+
 var coord: Vector2i
 var data: CropData
 var dry_days: int = 0
+## 成熟后已经放了多少天没收获
+var ripe_days: int = 0
 var is_withered := false
 var is_golden := false
 var gone := false
@@ -61,6 +66,13 @@ func is_mature() -> bool:
 ## 每天结束调用一次
 func advance_day() -> void:
 	if gone or is_withered:
+		return
+
+	# 已经成熟：只看"放了几天没收获"，浇水不再延命
+	if is_mature():
+		ripe_days += 1
+		if ripe_days >= RIPE_DAYS_TO_WITHER:
+			_wither()
 		return
 
 	if watered:
@@ -129,6 +141,7 @@ func harvest() -> void:
 	Game.add_stock(data.name, amount)
 
 	# 收获瞬间的形态
+	ripe_days = 0
 	animation = data.name
 	frame = last_stage()
 	_update_offset()
