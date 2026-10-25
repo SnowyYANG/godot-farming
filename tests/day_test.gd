@@ -27,6 +27,8 @@ func _ready() -> void:
 	_test_golden(crops["mint"])
 
 	_test_day_length()
+	_test_ripe_withers()
+	_test_bgm()
 	_test_watered_soil_not_aging()
 	_test_input_events()
 	await _test_clear_withered()
@@ -307,3 +309,41 @@ func _ghost_count() -> int:
 		if child is Sprite2D and is_instance_valid(child):
 			n += 1
 	return n
+
+
+# ── L. 成熟后放着不收：第 3 天结算就过熟枯萎 ──────────────────────
+func _test_ripe_withers() -> void:
+	print("\n[L] 成熟后不收 → 第 3 天枯萎")
+	var coord := Vector2i(10, 0)
+	var crop := _plant(Game.crop_datas[0], coord)   # cabbage，成果帧 2
+	_water(coord); Game._end_day()
+	_water(coord); Game._end_day()
+	_check("已经成熟", crop.is_mature() and not crop.is_withered,
+		"frame=%d" % crop.frame)
+	# 之后一直浇水，看能不能靠浇水续命
+	_water(coord); Game._end_day()
+	_check("放着第 1 天：还在", not crop.is_withered, "ripe=%d" % crop.ripe_days)
+	_water(coord); Game._end_day()
+	_check("放着第 2 天：还在（还没到时限）", not crop.is_withered, "ripe=%d" % crop.ripe_days)
+	_water(coord); Game._end_day()
+	_check("放着第 3 天：过熟枯萎（浇水也救不回来）", crop.is_withered,
+		"ripe=%d withered=%s" % [crop.ripe_days, crop.is_withered])
+
+
+# ── M. 背景音乐：加载到、循环、在播 ──────────────────────────────
+func _test_bgm() -> void:
+	print("\n[M] 背景音乐")
+	var player := Game.get_node_or_null(^"Bgm") as AudioStreamPlayer
+	_check("game.tscn 里有 Bgm 节点", player != null)
+	if player == null:
+		return
+	var stream := player.stream
+	_check("Bgm 挂了音频流", stream != null, str(stream))
+	if stream == null:
+		return
+	_check("音频流是 ogg 类型", stream is AudioStreamOggVorbis, stream.get_class())
+	var ogg := stream as AudioStreamOggVorbis
+	_check("循环已开启", ogg.loop == true)
+	_check("时长 > 5 秒", stream.get_length() > 5.0, "%.1f 秒" % stream.get_length())
+	_check("autoplay 已开启", player.autoplay == true)
+	_check("正在播放", player.playing == true)
