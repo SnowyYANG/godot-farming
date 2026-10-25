@@ -17,9 +17,10 @@ var watered: bool:
 		return Game.map_wet_soil.get_cell_tile_data(coord) != null
 
 
-## 非种子阶段整体上移 8px：素材里苗/成熟株画在 16x16 格的下半部分，
-## 不抬起来会看着陷进土里。第 0 帧（种子）保持贴地。
-const GROWN_OFFSET_Y := -8.0
+## 素材里每个阶段的苗都画在 16x16 格的**下半部分**（底边贴 15/16 行），
+## 所以瓦片对齐到格子里就是对的，不需要再整体上抬；上抬 -8 会让整排作物
+## 浮在土块上方（客户反馈"种子、苗都偏上"）。
+const GROWN_OFFSET_Y := 0.0
 
 
 func _ready() -> void:

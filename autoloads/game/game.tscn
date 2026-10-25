@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://ntdshv0x0gix" path="res://data/_models/crop_data.gd" id="2_60txh"]
 [ext_resource type="PackedScene" uid="uid://cwmhrb3whjqws" path="res://prefabs/tool_selection/tool_selection.tscn" id="4_fc0e3"]
 [ext_resource type="Texture2D" uid="uid://bvuln6ndjsh8f" path="res://assets/icons/icon.png" id="5_7jktm"]
+[ext_resource type="Texture2D" uid="uid://ddqm5sdra873y" path="res://assets/sprites/crops_veg.png" id="6_tools"]
 [ext_resource type="TileSet" uid="uid://cpuv51quckrea" path="res://tilesets/main_tileset.tres" id="8_u77e6"]
 [ext_resource type="Resource" uid="uid://bwfn63amikqak" path="res://data/crops/cabbage.tres" id="20_cabbage"]
 [ext_resource type="Resource" uid="uid://cgtau16rtnxwj" path="res://data/crops/mushroom.tres" id="21_mushroom"]
@@ -12,12 +13,12 @@
 [ext_resource type="Resource" uid="uid://c3d7g8phdpb62" path="res://data/crops/mint.tres" id="24_mint"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ryrav"]
-atlas = ExtResource("5_7jktm")
-region = Rect2(96, 0, 16, 16)
+atlas = ExtResource("6_tools")
+region = Rect2(256, 16, 16, 16)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_eow3j"]
-atlas = ExtResource("5_7jktm")
-region = Rect2(0, 0, 16, 16)
+atlas = ExtResource("6_tools")
+region = Rect2(288, 16, 16, 16)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_60txh"]
 bg_color = Color(1, 1, 1, 1)
