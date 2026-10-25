@@ -26,8 +26,10 @@ func _ready() -> void:
 	_test_mint_repeat(crops["mint"])
 	_test_golden(crops["mint"])
 
+	_test_day_length()
 	_test_watered_soil_not_aging()
 	_test_input_events()
+	await _test_clear_withered()
 	await _test_absorb_ghost()
 
 	print("\n=== 结果: %d 通过, %d 失败 ===" % [pass_count, fail_count])
@@ -173,6 +175,57 @@ func _test_golden(data: CropData) -> void:
 	_check("金花收获 +2", Game.stock.get("mint", 0) == before + 2,
 		"库存 %d → %d" % [before, Game.stock.get("mint", 0)])
 	data.golden_chance = saved
+
+
+# ── J. 一天的长度 = max_time 拍，正好 30 拍换一次天 ───────────────
+func _test_day_length() -> void:
+	print("
+[J] 一天时长")
+	_check("max_time 默认 30 拍", Game.max_time == 30, "max_time=%d" % Game.max_time)
+	_check("Timer_Time 一拍 1 秒", is_equal_approx(Game.timer_time.wait_time, 1.0),
+		"wait_time=%.2f" % Game.timer_time.wait_time)
+	var d0 := Game.day
+	Game.time = 0
+	for i in range(Game.max_time - 1):
+		Game._on_tick()
+	_check("第 %d 拍之前还没换天" % (Game.max_time - 1), Game.day == d0,
+		"day %d → %d" % [d0, Game.day])
+	Game._on_tick()
+	_check("第 %d 拍准时换天（一天 = 30 秒）" % Game.max_time, Game.day == d0 + 1,
+		"day %d → %d" % [d0, Game.day])
+
+
+# ── K. 枯萎作物：点一下渐隐消失，不产出 ─────────────────────────
+func _test_clear_withered() -> void:
+	print("
+[K] 枯萎作物点一下渐隐消失")
+	var coord := Vector2i(9, 0)
+	var crop := _plant(Game.crop_datas[0], coord)
+	_water(coord)
+	Game._end_day()
+	for i in range(3):
+		Game._end_day()
+	_check("已枯萎", crop.is_withered and not crop.gone,
+		"withered=%s gone=%s" % [crop.is_withered, crop.gone])
+	if not crop.is_withered:
+		return
+
+	var stock_before: int = Game.stock.get("cabbage", 0)
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = Game.world_to_screen(Game.map_soil.map_to_local(coord))
+	Game._unhandled_input(ev)
+
+	_check("点击后立刻从 crop_dict 移除", not Game.crop_dict.has(coord))
+	_check("枯萎作物没有产出", Game.stock.get("cabbage", 0) == stock_before,
+		"库存 %d" % Game.stock.get("cabbage", 0))
+	_check("不是瞬间消失（渐变开始，仍存在）", is_instance_valid(crop))
+	await get_tree().create_timer(0.28).timeout
+	var mid_ok := is_instance_valid(crop) and crop.modulate.a < 1.0 and crop.modulate.a > 0.0
+	_check("渐变中：半透明", mid_ok, "alpha=%.2f" % (crop.modulate.a if is_instance_valid(crop) else -1.0))
+	await get_tree().create_timer(0.6).timeout
+	_check("渐变结束后被销毁", not is_instance_valid(crop))
 
 
 # ── I. 空土当天浇过水 = 操作过，不该算进老化天数 ─────────────────

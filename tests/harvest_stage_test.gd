@@ -89,6 +89,24 @@ func _ready() -> void:
 		"frame=%d reset=%d" % [crop2.frame, data_repeat.reset_stage])
 	_check("仍在地块上", Game.crop_dict.has(coord2) and not crop2.gone)
 
+	print("\n[D2] 薄荷收获后回到小花骨朵（f3）")
+	var mint_data: CropData = Game.crop_datas[4]
+	var coord3 := Vector2i(9, 2)
+	var crop3 := _plant(mint_data, coord3)
+	for i in range(7):
+		_water(coord3)
+		Game._end_day()
+	_check("薄荷成熟在成果帧 %d" % crop3.mature_stage(), crop3.frame == crop3.mature_stage(),
+		"frame=%d" % crop3.frame)
+	crop3.harvest()
+	_check("收获后回到 reset_stage", crop3.frame == mint_data.reset_stage,
+		"frame=%d reset=%d" % [crop3.frame, mint_data.reset_stage])
+	_check("reset_stage 是小花骨朵 f3", mint_data.reset_stage == 3, "reset=%d" % mint_data.reset_stage)
+	var tex := crop3.sprite_frames.get_frame_texture(mint_data.name, crop3.frame)
+	_check("回到的那一帧就是贴图里的 f3", (tex as AtlasTexture) != null and (mint_data.stages[mint_data.reset_stage] as AtlasTexture) != null and (tex as AtlasTexture).region == (mint_data.stages[mint_data.reset_stage] as AtlasTexture).region)
+	Game.crop_dict.erase(coord3)
+	await get_tree().create_timer(0.7).timeout
+
 	print("\n[E] 金花只改本株，不影响同种其它作物")
 	var mint: CropData = Game.crop_datas[4]
 	var saved := mint.golden_chance
