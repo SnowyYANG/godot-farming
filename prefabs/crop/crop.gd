@@ -98,6 +98,19 @@ func _wither() -> void:
 	modulate = Color(0.75, 0.75, 0.7)
 
 
+## 枯萎的作物：玩家点一下，就地渐变消失（没有产出，也不留残影）
+func clear_withered() -> void:
+	if gone or not is_withered:
+		return
+	gone = true
+	Game.crop_dict.erase(coord)
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(self, "modulate:a", 0.0, 0.55)
+	t.tween_property(self, "scale", Vector2(0.85, 0.85), 0.55)
+	t.chain().tween_callback(queue_free)
+
+
 func _disappear() -> void:
 	gone = true
 	Game.crop_dict.erase(coord)
