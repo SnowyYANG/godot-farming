@@ -37,15 +37,14 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 ## About
 
 * **Program**: Kottalo
-* **Art**: [MaeveDevs](https://maevedevs.itch.io/) - Farm RPG - Tiny Asset Pack
+* **Art**: 像素虚空
 * **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov (MIT, see [LICENSE](addons/resources_spreadsheet_view/LICENSE.md))
 
 ## License
 
 * **Project**: [GPL-3.0](LICENSE)
 * **Assets**
-  - **Art** (*.png* - tilesets, crops, tool icons): [Farm RPG - Tiny Asset Pack](https://emanuelledev.itch.io) by **EmanuelleDev** - free for commercial and non-commercial use, modification allowed, resale and redistribution of the assets **not** allowed, credit is mandatory → [LICENSE-assets.txt](LICENSE-assets.txt)
-  - **Project icon** (*icon.svg*): Godot Engine's default project icon (MIT)
+  - **Art** (*.png*): [CC-BY-SA-4.0](LICENSE-assets.txt)
   - **Editor addon** (*addons/resources_spreadsheet_view/*): MIT, © 2022 Gennady "Don Tnowe" Krupenyov
 
 ## Acknowledgments
