@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cwmhrb3whjqws"]
 
 [ext_resource type="Script" uid="uid://ckps02pkk21lq" path="res://prefabs/tool_selection/tool_selection.gd" id="1_4p8df"]
-[ext_resource type="Texture2D" uid="uid://bvuln6ndjsh8f" path="res://assets/icons/icon.png" id="1_m3erp"]
+[ext_resource type="Texture2D" uid="uid://ddqm5sdra873y" path="res://assets/sprites/crops_veg.png" id="1_m3erp"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_4p8df"]
 bg_color = Color(0.2, 0.148, 0.108, 1)
@@ -29,7 +29,7 @@ border_color = Color(0.58, 0.44, 0.32, 1)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4p8df"]
 atlas = ExtResource("1_m3erp")
-region = Rect2(0, 0, 16, 16)
+region = Rect2(256, 16, 16, 16)
 
 [node name="ToolSelection" type="PanelContainer" unique_id=1804666492 node_paths=PackedStringArray("rect_icon", "select_frame", "hover_frame")]
 custom_minimum_size = Vector2(16, 16)

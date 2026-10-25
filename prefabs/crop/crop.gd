@@ -166,10 +166,15 @@ func _spawn_absorb_ghost() -> void:
 		Game.crop_pool.add_child(ghost)
 
 	var dest: Vector2 = target.global_position + Vector2(4, 4)
+	# 落到库存图标正中：玩家的眼睛要能跟着它走到"哪个格子"
+	var icon := target.get_node_or_null(^"Icon") as Control
+	if icon != null:
+		dest = icon.global_position + icon.size * 0.5
+	# 飞行途中保持不透明，**到达库存项之后**才淡出——半路淡掉玩家就看不出飞去哪了
 	var fly := ghost.create_tween()
 	fly.set_parallel(true)
-	fly.tween_property(ghost, "global_position", dest, 0.45) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fly.tween_property(ghost, "modulate:a", 0.0, 0.45)
-	fly.tween_property(ghost, "scale", Vector2(0.6, 0.6), 0.45)
+	fly.tween_property(ghost, "global_position", dest, 0.5) \
+		.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+	fly.tween_property(ghost, "scale", Vector2(0.8, 0.8), 0.5)
+	fly.chain().tween_property(ghost, "modulate:a", 0.0, 0.12)
 	fly.chain().tween_callback(ghost.queue_free)

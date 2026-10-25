@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://c77hedbdpw140" path="res://autoloads/game/game.gd" id="1_feb5d"]
 [ext_resource type="Script" uid="uid://ntdshv0x0gix" path="res://data/_models/crop_data.gd" id="2_60txh"]
 [ext_resource type="PackedScene" uid="uid://cwmhrb3whjqws" path="res://prefabs/tool_selection/tool_selection.tscn" id="4_fc0e3"]
-[ext_resource type="Texture2D" uid="uid://bvuln6ndjsh8f" path="res://assets/icons/icon.png" id="5_7jktm"]
 [ext_resource type="Texture2D" uid="uid://ddqm5sdra873y" path="res://assets/sprites/crops_veg.png" id="6_tools"]
 [ext_resource type="TileSet" uid="uid://cpuv51quckrea" path="res://tilesets/main_tileset.tres" id="8_u77e6"]
 [ext_resource type="Resource" uid="uid://bwfn63amikqak" path="res://data/crops/cabbage.tres" id="20_cabbage"]

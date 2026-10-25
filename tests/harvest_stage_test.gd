@@ -53,8 +53,28 @@ func _ready() -> void:
 		var d: float = (ghost.global_position - crop.global_position).length()
 		_check("残影从作物所在格起飞", d < 2.0, "偏移 %.1f px" % d)
 	_check("库存 +1", Game.stock.get(data0.name, 0) >= 1, "库存 %d" % Game.stock.get(data0.name, 0))
-	await get_tree().create_timer(0.6).timeout
-	_check("残影飞完后销毁", _ghost_count() == 0, "剩余 %d" % _ghost_count())
+
+	# 吸收动画必须一路飞到库存图标上才消失，玩家才知道飞去哪儿了
+	var icon_center := _stock_icon_center(data0.name)
+	var g: Sprite2D = ghost as Sprite2D
+	if g == null:
+		_check("拿到残影节点", false)
+	else:
+		var d0: float = (g.global_position - icon_center).length()
+		await get_tree().create_timer(0.25).timeout
+		var d1: float = (g.global_position - icon_center).length() if is_instance_valid(g) else -1.0
+		_check("飞行途中还在、且在靠近库存项", is_instance_valid(g) and d1 < d0,
+			"距离 %.1f → %.1f" % [d0, d1])
+		if is_instance_valid(g):
+			_check("飞行途中没有提前淡出", g.modulate.a > 0.9, "alpha=%.2f" % g.modulate.a)
+		await get_tree().create_timer(0.3).timeout
+		var arrived: bool = is_instance_valid(g)
+		var d2: float = (g.global_position - icon_center).length() if arrived else -1.0
+		_check("到达库存图标位置（距离 < 2px）", arrived and d2 < 2.0, "距离 %.1f" % d2)
+		if arrived:
+			_check("到达后才开始淡出", g.modulate.a <= 1.0)
+	await get_tree().create_timer(0.3).timeout
+	_check("落地淡出后销毁", _ghost_count() == 0, "剩余 %d" % _ghost_count())
 
 	print("\n[D] 连种作物：收获瞬间切最后一帧，本体回到重置阶段")
 	var data_repeat: CropData = Game.crop_datas[1]    # mushroom，连种
@@ -110,6 +130,16 @@ func _plant(data: CropData, coord: Vector2i) -> Crop:
 
 func _water(coord: Vector2i) -> void:
 	Game._apply_terrain(Game.map_wet_soil, coord, Game.TERRAIN_WET)
+
+
+func _stock_icon_center(crop_name: String) -> Vector2:
+	var label: Node = Game.stock_pool.get_node_or_null(NodePath(crop_name))
+	if label == null:
+		return Vector2.ZERO
+	var icon := label.get_node_or_null(^"Icon") as Control
+	if icon == null:
+		return (label as Control).global_position
+	return icon.global_position + icon.size * 0.5
 
 
 func _ghost_count() -> int:

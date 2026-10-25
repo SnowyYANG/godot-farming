@@ -300,7 +300,7 @@ func _build_hud() -> void:
 
 	# —— 第一行：三栏 ——
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 6)
+	bar.add_theme_constant_override("separation", 5)
 	bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(bar)
