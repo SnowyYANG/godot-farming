@@ -460,6 +460,14 @@ func _end_day() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# F11（或 Alt+Enter）全屏 / 窗口切换：默认全屏启动，小屏上想回窗口化时用这个
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F11 or (event.keycode == KEY_ENTER and event.alt_pressed):
+			var window := get_window()
+			window.mode = Window.MODE_WINDOWED if window.mode == Window.MODE_FULLSCREEN else Window.MODE_FULLSCREEN
+			get_viewport().set_input_as_handled()
+		return
+
 	# 只处理鼠标事件：键盘/手柄事件没有 position，直接读会报
 	# "Invalid access to property or key 'position' on InputEventKey"
 	if not (event is InputEventMouse):
