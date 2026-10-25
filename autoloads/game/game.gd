@@ -22,6 +22,8 @@ var world_offset := Vector2.ZERO
 var field_rect := Rect2()
 var _panning := false
 var day_label: Label
+## 背景音乐播放器（game.tscn 里的 Bgm 节点）
+var bgm: AudioStreamPlayer
 
 signal tool_changed
 signal day_changed
@@ -60,6 +62,11 @@ var selected_tool: ToolSelection:
 
 
 func _ready() -> void:
+	# BGM：循环在 .ogg 的导入参数里已经勾了，这里再兜一层，免得以后换素材忘了勾
+	bgm = get_node_or_null(^"Bgm") as AudioStreamPlayer
+	if bgm != null and bgm.stream is AudioStreamOggVorbis:
+		(bgm.stream as AudioStreamOggVorbis).loop = true
+
 	progress_time.max_value = max_time
 	selected_tool = tool_selection_pool.get_child(0)
 

@@ -80,7 +80,7 @@ func _ready() -> void:
 	var data_repeat: CropData = Game.crop_datas[1]    # mushroom，连种
 	var coord2 := Vector2i(11, 2)
 	var crop2 := _plant(data_repeat, coord2)
-	for i in range(6):
+	for i in range(crop2.mature_stage()):
 		_water(coord2)
 		Game._end_day()
 	_check("蘑菇长到成果帧", crop2.frame == crop2.mature_stage(), "frame=%d" % crop2.frame)
