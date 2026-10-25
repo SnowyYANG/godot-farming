@@ -1,0 +1,142 @@
+extends Node
+
+## 回归：成果状态 = 倒数第二帧；收获瞬间切到最后一帧，再从那一帧吸进库存
+## 运行: godot --headless --path . tests/harvest_stage_test.tscn
+
+var pass_count := 0
+var fail_count := 0
+
+
+func _ready() -> void:
+	await get_tree().process_frame
+	await get_tree().process_frame
+
+	print("[A] 各作物的成果状态 = 倒数第二帧")
+	for data in Game.crop_datas:
+		var crop := _spawn_prefab(data)
+		var last := crop.last_stage()
+		var mature := crop.mature_stage()
+		_check("%s: 成果帧 = %d（最后一帧 %d）" % [data.name, mature, last],
+			mature == last - 1 and last >= 1)
+		crop.free()
+
+	print("\n[B] 一天一浇水，长到成果状态就停住")
+	var data0: CropData = Game.crop_datas[0]          # cabbage，一次性收获
+	var coord := Vector2i(10, 2)
+	var crop := _plant(data0, coord)
+	var mature0 := crop.mature_stage()
+	var days := 0
+	var seen: Array[int] = []
+	for i in range(8):
+		_water(coord)
+		Game._end_day()
+		days += 1
+		seen.append(crop.frame)
+		if days > mature0 + 1:
+			break
+	print("   逐天帧: ", seen, "  成果帧=", mature0, " 最后一帧=", crop.last_stage())
+	_check("帧序列单调到成果帧后停住", seen[-1] == mature0, "最后 frame=%d" % crop.frame)
+	_check("成果状态可收获", crop.is_mature(), "frame=%d" % crop.frame)
+
+	print("\n[C] 一次性作物：收获瞬间切到最后一帧，随后淡出移除")
+	var ghosts_before := _ghost_count()
+	crop.harvest()
+	_check("收获瞬间本体停在最后一帧", crop.frame == crop.last_stage(),
+		"frame=%d/%d" % [crop.frame, crop.last_stage()])
+	_check("已从 crop_dict 移除", not Game.crop_dict.has(coord))
+	_check("生成吸收残影", _ghost_count() == ghosts_before + 1,
+		"残影 %d → %d" % [ghosts_before, _ghost_count()])
+	var ghost: Node = _last_ghost()
+	if ghost != null:
+		var gtex: Texture2D = ghost.texture
+		_check("残影用的是最后一帧贴图", gtex == crop.sprite_frames.get_frame_texture(data0.name, crop.last_stage()))
+		var d: float = (ghost.global_position - crop.global_position).length()
+		_check("残影从作物所在格起飞", d < 2.0, "偏移 %.1f px" % d)
+	_check("库存 +1", Game.stock.get(data0.name, 0) >= 1, "库存 %d" % Game.stock.get(data0.name, 0))
+	await get_tree().create_timer(0.6).timeout
+	_check("残影飞完后销毁", _ghost_count() == 0, "剩余 %d" % _ghost_count())
+
+	print("\n[D] 连种作物：收获瞬间切最后一帧，本体回到重置阶段")
+	var data_repeat: CropData = Game.crop_datas[1]    # mushroom，连种
+	var coord2 := Vector2i(11, 2)
+	var crop2 := _plant(data_repeat, coord2)
+	for i in range(6):
+		_water(coord2)
+		Game._end_day()
+	_check("蘑菇长到成果帧", crop2.frame == crop2.mature_stage(), "frame=%d" % crop2.frame)
+	crop2.harvest()
+	_check("本体回到 reset_stage", crop2.frame == data_repeat.reset_stage,
+		"frame=%d reset=%d" % [crop2.frame, data_repeat.reset_stage])
+	_check("仍在地块上", Game.crop_dict.has(coord2) and not crop2.gone)
+
+	print("\n[E] 金花只改本株，不影响同种其它作物")
+	var mint: CropData = Game.crop_datas[4]
+	var saved := mint.golden_chance
+	mint.golden_chance = 1.0
+	var ca := _plant(mint, Vector2i(12, 2))
+	var cb := _plant(mint, Vector2i(13, 2))
+	var shared_before: SpriteFrames = ca.sprite_frames
+	for i in range(7):
+		_water(Vector2i(12, 2))
+		_water(Vector2i(13, 2))
+		Game._end_day()
+	print("   a: golden=", ca.is_golden, " frames_same_resource=", ca.sprite_frames == cb.sprite_frames)
+	_check("两株都到成果帧/或成熟", ca.is_mature() and cb.is_mature())
+	_check("金花株拥有独立 SpriteFrames", ca.sprite_frames != shared_before or not ca.is_golden)
+	mint.golden_chance = saved
+	Game.crop_dict.erase(Vector2i(12, 2))
+	Game.crop_dict.erase(Vector2i(13, 2))
+
+	print("\n=== 结果: %d 通过, %d 失败 ===" % [pass_count, fail_count])
+	get_tree().quit(0 if fail_count == 0 else 1)
+
+
+func _spawn_prefab(data: CropData) -> Crop:
+	var crop: Crop = Prefabs.crop.instantiate()
+	add_child(crop)
+	crop.setup(data, Vector2i(0, 0))
+	return crop
+
+
+func _plant(data: CropData, coord: Vector2i) -> Crop:
+	Game._apply_terrain(Game.map_soil, coord, Game.TERRAIN_SOIL)
+	var crop: Crop = Prefabs.crop.instantiate()
+	Game.crop_pool.add_child(crop)
+	crop.setup(data, coord)
+	crop.position = Game.map_soil.map_to_local(coord)
+	Game.crop_dict[coord] = crop
+	return crop
+
+
+func _water(coord: Vector2i) -> void:
+	Game._apply_terrain(Game.map_wet_soil, coord, Game.TERRAIN_WET)
+
+
+func _ghost_count() -> int:
+	var hud: Node = Game.get_node_or_null(^"HudLayer")
+	if hud == null:
+		return 0
+	var n := 0
+	for child in hud.get_children():
+		if child is Sprite2D and is_instance_valid(child):
+			n += 1
+	return n
+
+
+func _last_ghost() -> Node:
+	var hud: Node = Game.get_node_or_null(^"HudLayer")
+	if hud == null:
+		return null
+	for child in hud.get_children():
+		if child is Sprite2D and is_instance_valid(child):
+			return child
+	return null
+
+
+func _check(label: String, condition: bool, detail: String = "") -> void:
+	if condition:
+		pass_count += 1
+		print("  ✓ ", label, ("  " + detail) if detail else "")
+	else:
+		fail_count += 1
+		print("  ✗ ", label, "  ", detail)

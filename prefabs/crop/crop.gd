@@ -48,8 +48,14 @@ func last_stage() -> int:
 	return sprite_frames.get_frame_count(data.name) - 1
 
 
+## 可收获的"成果状态" = 倒数第二帧。最后一帧是"收获瞬间"的样子：
+## 点下去先切到最后一帧，再从这一帧吸进对应的收成库存。
+func mature_stage() -> int:
+	return maxi(last_stage() - 1, 0)
+
+
 func is_mature() -> bool:
-	return not is_withered and frame >= last_stage()
+	return not is_withered and not gone and frame >= mature_stage()
 
 
 ## 每天结束调用一次
@@ -59,7 +65,7 @@ func advance_day() -> void:
 
 	if watered:
 		dry_days = 0
-		if frame < last_stage():
+		if frame < mature_stage():
 			frame += 1
 			_roll_golden()
 	else:
@@ -72,11 +78,17 @@ func advance_day() -> void:
 
 
 func _roll_golden() -> void:
-	if is_mature() and data.golden_chance > 0.0 and not data.golden.is_empty():
-		if randf() < data.golden_chance:
-			is_golden = true
-			sprite_frames.set_frame(data.name, last_stage(), data.golden[0])
-			frame = last_stage()
+	if not is_mature() or data.golden_chance <= 0.0 or data.golden.is_empty():
+		return
+	if randf() >= data.golden_chance:
+		return
+	is_golden = true
+	# 只改这一株：SpriteFrames 是场景里的共享资源，直接 set_frame 会把
+	# 所有同种作物的成果帧都变成金花，所以先复制一份再改。
+	var own: SpriteFrames = sprite_frames.duplicate()
+	own.set_frame(data.name, mature_stage(), data.golden[0])
+	sprite_frames = own
+	frame = mature_stage()
 
 
 func _wither() -> void:
@@ -94,7 +106,8 @@ func _disappear() -> void:
 	tween.tween_callback(queue_free)
 
 
-## 收获。连种作物回到指定阶段，一次性作物飞向库存后消失。
+## 收获：先把本体切到最后一帧（"收下来了"的样子），再从这一帧生个残影吸进
+## 对应的收成库存；一次性作物随后淡出消失，连种作物回到重置阶段继续长。
 func harvest() -> void:
 	if gone or is_withered:
 		return
@@ -102,13 +115,17 @@ func harvest() -> void:
 	var amount: int = data.yield_amount * (2 if is_golden else 1)
 	Game.add_stock(data.name, amount)
 
+	# 收获瞬间的形态
+	animation = data.name
+	frame = last_stage()
+	_update_offset()
+	_spawn_absorb_ghost()
+
 	if data.repeat_harvest:
-		# 连种：先复制一份当前外形飞向库存（吸收动画），本体立刻回到重置阶段，
-		# 否则收获动画会被"重置到小花骨朵"直接截断
-		_spawn_absorb_ghost()
+		# 连种：残影负责飞，本体立刻回到重置阶段（否则下一个生长日会从"收获帧"继续）
 		is_golden = false
-		animation = data.name
-		frame = clampi(data.reset_stage, 0, last_stage())
+		frame = clampi(data.reset_stage, 0, maxi(mature_stage() - 1, 0))
+		_update_offset()
 		var pop := create_tween()
 		pop.tween_property(self, "scale", Vector2(1.15, 0.85), 0.08)
 		pop.tween_property(self, "scale", Vector2.ONE, 0.12)
@@ -116,18 +133,15 @@ func harvest() -> void:
 
 	gone = true
 	Game.crop_dict.erase(coord)
-	var target: Node = Game.stock_pool.get_node_or_null(NodePath(data.name))
-	if target == null:
-		queue_free()
-		return
-	var fly := create_tween()
-	fly.set_parallel(true)
-	fly.tween_property(self, "global_position", target.global_position + Vector2(4, 4), 0.4)
-	fly.tween_property(self, "modulate:a", 0.0, 0.4)
-	fly.chain().tween_callback(queue_free)
+	var fade := create_tween()
+	fade.tween_interval(0.1)
+	fade.tween_property(self, "modulate:a", 0.0, 0.22)
+	fade.tween_callback(queue_free)
 
 
-## 生成一个"残影"飞向库存，让连种作物也有完整的吸收动画
+## 生成一个"残影"从收获帧飞向对应的收成库存。
+## 世界画在 SubViewport 里、库存栏在 HUD 的 CanvasLayer 里，所以残影挂到 HUD
+## 层上并用画布坐标飞，否则会被子视口裁掉、飞不到栏目上。
 func _spawn_absorb_ghost() -> void:
 	var target: Node = Game.stock_pool.get_node_or_null(NodePath(data.name))
 	if target == null:
@@ -137,17 +151,25 @@ func _spawn_absorb_ghost() -> void:
 	if texture == null:
 		return
 
+	var hud: Node = Game.get_node_or_null(^"HudLayer")
 	var ghost := Sprite2D.new()
 	ghost.texture = texture
 	ghost.offset = Vector2(0, offset.y)
-	ghost.global_position = global_position
 	ghost.z_index = z_index + 1
-	Game.crop_pool.add_child(ghost)
+	if hud != null:
+		# 世界在 SubViewport 里，其全局坐标与画布坐标系一一对应（world_root 的
+		# 平移已经算在里面了），所以直接用 global_position，别再叠一次 world_offset
+		ghost.global_position = global_position
+		hud.add_child(ghost)
+	else:
+		ghost.global_position = global_position
+		Game.crop_pool.add_child(ghost)
 
+	var dest: Vector2 = target.global_position + Vector2(4, 4)
 	var fly := ghost.create_tween()
 	fly.set_parallel(true)
-	fly.tween_property(ghost, "global_position", target.global_position + Vector2(4, 4), 0.4) \
+	fly.tween_property(ghost, "global_position", dest, 0.45) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fly.tween_property(ghost, "modulate:a", 0.0, 0.4)
-	fly.tween_property(ghost, "scale", Vector2(0.6, 0.6), 0.4)
+	fly.tween_property(ghost, "modulate:a", 0.0, 0.45)
+	fly.tween_property(ghost, "scale", Vector2(0.6, 0.6), 0.45)
 	fly.chain().tween_callback(ghost.queue_free)

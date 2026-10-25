@@ -206,24 +206,27 @@ func _test_absorb_ghost() -> void:
 	var crop := _plant(Game.crop_datas[1], coord)   # mushroom，连种
 	crop.frame = crop.last_stage()
 
-	var before := 0
-	for child in Game.crop_pool.get_children():
-		if child is Sprite2D:
-			before += 1
+	var before := _ghost_count()
 
 	crop.harvest()
 
-	var after := 0
-	for child in Game.crop_pool.get_children():
-		if child is Sprite2D:
-			after += 1
+	var after := _ghost_count()
 	_check("收获时生成吸收残影", after == before + 1, "残影 %d → %d" % [before, after])
 	_check("本体立刻回到重置阶段", crop.frame == Game.crop_datas[1].reset_stage,
 		"frame=%d" % crop.frame)
 
 	await get_tree().create_timer(0.7).timeout
-	var later := 0
-	for child in Game.crop_pool.get_children():
-		if child is Sprite2D and is_instance_valid(child):
-			later += 1
+	var later := _ghost_count()
 	_check("残影飞完后自动销毁", later == 0, "剩余 %d" % later)
+
+
+## 残影挂在 HUD 层（世界在 SubViewport 里，挂世界层会被裁掉）
+func _ghost_count() -> int:
+	var hud: Node = Game.get_node_or_null(^"HudLayer")
+	if hud == null:
+		return 0
+	var n := 0
+	for child in hud.get_children():
+		if child is Sprite2D and is_instance_valid(child):
+			n += 1
+	return n
