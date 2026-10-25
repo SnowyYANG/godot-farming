@@ -26,6 +26,7 @@ func _ready() -> void:
 	_test_mint_repeat(crops["mint"])
 	_test_golden(crops["mint"])
 
+	_test_watered_soil_not_aging()
 	_test_input_events()
 	await _test_absorb_ghost()
 
@@ -94,7 +95,9 @@ func _test_seed_dries_out(data: CropData) -> void:
 	Game._end_day()
 	_check("1 天没浇水还在", is_instance_valid(crop) and not crop.gone, "dry_days=%d" % crop.dry_days)
 	Game._end_day()
-	_check("2 天没浇水后消失", crop.gone == true)
+	_check("2 天没浇水还在（还没到时限）", is_instance_valid(crop) and not crop.gone, "dry_days=%d" % crop.dry_days)
+	Game._end_day()
+	_check("3 天没浇水后才消失", crop.gone == true, "dry_days=%d" % crop.dry_days)
 
 
 # ── C. 苗 2 天不浇水 → 枯萎 ───────────────────────────────────────
@@ -107,7 +110,9 @@ func _test_seedling_withers(data: CropData) -> void:
 	Game._end_day()                          # 干第 1 天
 	_check("干 1 天未枯萎", not crop.is_withered)
 	Game._end_day()                          # 干第 2 天
-	_check("干 2 天枯萎", crop.is_withered == true)
+	_check("干 2 天仍未枯萎", not crop.is_withered, "dry_days=%d" % crop.dry_days)
+	Game._end_day()                          # 干第 3 天
+	_check("干 3 天才枯萎", crop.is_withered == true, "dry_days=%d" % crop.dry_days)
 
 
 # ── D. 蘑菇连种：收获后回到第二个堆堆 ─────────────────────────────
@@ -168,6 +173,25 @@ func _test_golden(data: CropData) -> void:
 	_check("金花收获 +2", Game.stock.get("mint", 0) == before + 2,
 		"库存 %d → %d" % [before, Game.stock.get("mint", 0)])
 	data.golden_chance = saved
+
+
+# ── I. 空土当天浇过水 = 操作过，不该算进老化天数 ─────────────────
+func _test_watered_soil_not_aging() -> void:
+	print("
+[I] 空土浇过水就不老化")
+	var coord := Vector2i(8, 0)
+	Game._apply_terrain(Game.map_soil, coord, Game.TERRAIN_SOIL)
+	Game.empty_soil_days[coord] = 0
+	for i in range(4):
+		_water(coord)
+		Game._end_day()
+	_check("连浇 4 天水的空土还在", Game.map_soil.get_cell_source_id(coord) != -1,
+		"days=%d" % Game.empty_soil_days.get(coord, -1))
+	Game._end_day()
+	Game._end_day()
+	_check("停手 2 天还在", Game.map_soil.get_cell_source_id(coord) != -1)
+	Game._end_day()
+	_check("停手第 3 天结算才长回草地", Game.map_soil.get_cell_source_id(coord) == -1)
 
 
 # ── G. 输入事件：键盘事件不能崩，鼠标事件正常 ────────────────────

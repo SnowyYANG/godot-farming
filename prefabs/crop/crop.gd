@@ -1,8 +1,8 @@
 class_name Crop
 extends AnimatedSprite2D
 
-## 连续不浇水多少天死亡（种子消失 / 苗枯萎）
-const DRY_DAYS_TO_DIE := 2
+## 连续不浇水多少天死亡（种子消失 / 苗枯萎）：同样等 2 天没水，第 3 天结算才死
+const DRY_DAYS_TO_DIE := 3
 
 var coord: Vector2i
 var data: CropData

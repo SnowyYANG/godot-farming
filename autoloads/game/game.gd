@@ -6,8 +6,9 @@ extends Node
 const TERRAIN_SOIL := 1
 const TERRAIN_WET := 2
 
-## 空地老化：土格连续这么多天没有作物，就长回草地
-const EMPTY_SOIL_LIMIT := 2
+## 空地老化：连续 2 天没操作，第 3 天结算时才长回草地（第 4 天早上看到草地）
+## 计数在每次换天时 +1，所以阈值 3 = 锄地当天 + 之后 2 天没动它
+const EMPTY_SOIL_LIMIT := 3
 
 ## 底部 HUD 栏高度（像素）。世界画面只画在栏的上方，所以栏目不会压住任何作物。
 const HUD_HEIGHT := 56
@@ -437,6 +438,11 @@ func _end_day() -> void:
 		crop_dict.erase(coord)
 
 	# 换天：湿土叠加层整体清掉，干土保持（作物留在原地，只是不再算浇水）
+	# 先记下浇过水的格子——湿土清掉后就查不到了，而"浇过水"属于当天操作过，
+	# 不该算进空土老化
+	var watered_cells := {}
+	for c in map_wet_soil.get_used_cells():
+		watered_cells[c] = true
 	map_wet_soil.clear()
 
 	# 空土老化：连续 EMPTY_SOIL_LIMIT 天没有作物 → 长回草地
@@ -444,6 +450,9 @@ func _end_day() -> void:
 	for cell in map_soil.get_used_cells():
 		if crop_dict.has(cell):
 			empty_soil_days.erase(cell)
+			continue
+		if watered_cells.has(cell):
+			empty_soil_days.erase(cell)   # 今天浇过水 = 操作过，重新计数
 			continue
 		var days: int = empty_soil_days.get(cell, 0) + 1
 		if days >= EMPTY_SOIL_LIMIT:

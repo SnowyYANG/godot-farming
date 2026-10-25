@@ -88,7 +88,9 @@ func _ready() -> void:
 	Game._end_day()
 	_check("第 1 天结束时土还在", Game.map_soil.get_cell_source_id(empty_cell) != -1)
 	Game._end_day()
-	_check("第 2 天结束时土消失（长回草地）", Game.map_soil.get_cell_source_id(empty_cell) == -1)
+	_check("第 2 天结束时土还在（连 2 天没操作还没到时限）", Game.map_soil.get_cell_source_id(empty_cell) != -1)
+	Game._end_day()
+	_check("第 3 天结束时土才消失（长回草地）", Game.map_soil.get_cell_source_id(empty_cell) == -1)
 	_check("该格草地还在", Game.map_grass.get_cell_source_id(empty_cell) != -1)
 	_check("计数已清理", not Game.empty_soil_days.has(empty_cell))
 
