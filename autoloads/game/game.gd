@@ -43,7 +43,10 @@ var crop_dict: Dictionary[Vector2i, Crop] = {}
 var empty_soil_days: Dictionary[Vector2i, int] = {}
 var stock: Dictionary[String, int] = {}
 
-var max_time: int = 12
+## 一天有多少个 tick。一天的真实时长 = max_time × Timer_Time.wait_time
+## （Timer_Time 在 game.tscn 里，默认 1 秒一拍，所以 max_time = 30 就是 30 秒一天）
+## 两个值都能在编辑器 Inspector 里直接改：Game 节点 → max_time；Timer_Time → wait_time
+@export var max_time: int = 30
 var day: int = 1
 var time: int:
 	set(value):
@@ -411,7 +414,8 @@ func add_stock(crop_name: String, amount: int = 1) -> void:
 
 func _on_tick() -> void:
 	time += 1
-	if time > max_time:
+	# >= 而不是 >：否则 max_time=30 实际要走 31 拍才换天，一天就不等于 30 秒了
+	if time >= max_time:
 		time = 0
 		_end_day()
 
@@ -509,10 +513,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 
 			# 成熟作物：点一下收获（连种作物回到指定阶段，金花额外 +1）
+			# 枯萎作物：点一下渐隐消失（没有产出）
 			if crop_dict.has(coord):
 				var planted: Crop = crop_dict[coord]
 				if planted.is_mature():
 					planted.harvest()
+					return
+				if planted.is_withered:
+					planted.clear_withered()
 					return
 
 			match selected_tool.tool_type:
