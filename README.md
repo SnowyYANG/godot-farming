@@ -36,8 +36,9 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 
 ## About
 
-* **Program**: Kottalo
-* **Art**: 像素虚空
+* **Director**: Snowy YANG
+* **Programmer**: Kottalo
+* **Artist**: 像素虚空
 * **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov
 
 ## License
