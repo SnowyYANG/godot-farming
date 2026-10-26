@@ -38,14 +38,14 @@ Open `project.godot` with [Godot 4.7](https://godotengine.org) and press F5. Exp
 
 * **Program**: Kottalo
 * **Art**: 像素虚空
-* **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov (MIT, see [LICENSE](addons/resources_spreadsheet_view/LICENSE.md))
+* **Editor addon**: "Edit Resources as Table" by Gennady "Don Tnowe" Krupenyov
 
 ## License
 
 * **Project**: [GPL-3.0](LICENSE)
 * **Assets**
   - **Art** (*.png*): [CC-BY-SA-4.0](LICENSE-assets.txt)
-  - **Editor addon** (*addons/resources_spreadsheet_view/*): MIT, © 2022 Gennady "Don Tnowe" Krupenyov
+  - **Editor addon** (*addons/resources_spreadsheet_view/*): [MIT](addons/resources_spreadsheet_view/LICENSE.md), © 2022 Gennady "Don Tnowe" Krupenyov
 
 ## Acknowledgments
 
