@@ -14,6 +14,12 @@ func _ready() -> void:
 	print("[A] 各作物的成果状态 = 倒数第二帧")
 	for data in Game.crop_datas:
 		var crop := _spawn_prefab(data)
+		if not data.plantable:
+			# 隐藏作物不可种植，crop.tscn 里本来就没有它的动画
+			_check("%s: 不可种植、没有生长动画" % data.name,
+				not crop.sprite_frames.has_animation(data.name))
+			crop.free()
+			continue
 		var last := crop.last_stage()
 		var mature := crop.mature_stage()
 		_check("%s: 成果帧 = %d（最后一帧 %d）" % [data.name, mature, last],

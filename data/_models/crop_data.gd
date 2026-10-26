@@ -14,3 +14,9 @@ var name: String:
 @export var golden_chance: float = 0.0              ## 成熟时变成金花的概率（薄荷 0.03）
 @export var golden: Array[AtlasTexture]             ## 金花贴图（可为空）
 @export var yield_amount: int = 1                   ## 每次收获数量
+
+## —— 隐藏作物相关 ——
+@export var plantable: bool = true                  ## false = 不进种子栏（只能靠掉落获得）
+@export var hidden_until_obtained: bool = false     ## true = 收成栏里一开始完全隐形，拿到才显示
+@export var hidden_drop: String = ""                ## 收获本作物时可能掉落的隐藏作物名
+@export var hidden_drop_chance: float = 0.0         ## 掉落概率（带保底，见 Game.roll_hidden_drop）
