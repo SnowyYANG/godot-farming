@@ -24,6 +24,9 @@ var _panning := false
 var day_label: Label
 ## 背景音乐播放器（game.tscn 里的 Bgm 节点）
 var bgm: AudioStreamPlayer
+## 隐藏作物：初始隐形的 UI 节点（crop_name → 节点数组），以及掉落保底计数
+var _hidden_entries: Dictionary = {}
+var _drop_pity: Dictionary = {}
 
 signal tool_changed
 signal day_changed
@@ -71,17 +74,26 @@ func _ready() -> void:
 	selected_tool = tool_selection_pool.get_child(0)
 
 	for crop in crop_datas:
-		var seed_selection: ToolSelection = Prefabs.tool_selection.instantiate()
-		seed_selection.rect_icon.texture = crop.icon
-		seed_selection.tool_type = Enums.ToolType.SEED
-		seed_selection.seed_data = crop
-		seed_selection_pool.add_child(seed_selection)
+		stock[crop.name] = 0
+
+		# 隐藏作物（plantable=false）不进种子栏，只能靠收获掉落拿到
+		if crop.plantable:
+			var seed_selection: ToolSelection = Prefabs.tool_selection.instantiate()
+			seed_selection.rect_icon.texture = crop.icon
+			seed_selection.tool_type = Enums.ToolType.SEED
+			seed_selection.seed_data = crop
+			seed_selection_pool.add_child(seed_selection)
+			if crop.hidden_until_obtained:
+				seed_selection.modulate.a = 0.0
+				_register_hidden_entry(crop.name, seed_selection)
 
 		var stock_label: StockLabel = Prefabs.stock_label.instantiate()
 		stock_label.rect_icon.texture = crop.stages[crop.stages.size() - 1]
 		stock_label.name = crop.name
-		stock[crop.name] = 0
 		stock_pool.add_child(stock_label)
+		if crop.hidden_until_obtained:
+			stock_label.modulate.a = 0.0
+			_register_hidden_entry(crop.name, stock_label)
 
 	_build_view()
 	_build_hud()
@@ -300,8 +312,9 @@ func _build_hud() -> void:
 
 	var root := VBoxContainer.new()
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
-	root.offset_left = 6
-	root.offset_right = -6
+	# 左右只留 3px：收成项加到 6 个后（含隐藏作物），6px 边距会让最后一个被切掉
+	root.offset_left = 3
+	root.offset_right = -3
 	root.offset_top = 4
 	root.offset_bottom = -4
 	root.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -311,7 +324,7 @@ func _build_hud() -> void:
 
 	# —— 第一行：三栏 ——
 	var bar := HBoxContainer.new()
-	bar.add_theme_constant_override("separation", 5)
+	bar.add_theme_constant_override("separation", 3)
 	bar.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
 	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	root.add_child(bar)
@@ -413,10 +426,50 @@ func _shot_and_quit() -> void:
 
 
 func add_stock(crop_name: String, amount: int = 1) -> void:
-	stock[crop_name] = stock.get(crop_name, 0) + amount
+	var before: int = stock.get(crop_name, 0)
+	stock[crop_name] = before + amount
 	var label: StockLabel = stock_pool.get_node_or_null(NodePath(crop_name))
 	if label:
 		label.number = stock[crop_name]
+	# 隐藏作物：第一次拿到时把隐形的那一项显出来
+	if before == 0 and stock[crop_name] > 0:
+		_reveal_hidden_entries(crop_name)
+
+
+## 隐藏作物在 UI 里的节点（初始 alpha=0），拿到后一起淡入
+func _register_hidden_entry(crop_name: String, node: CanvasItem) -> void:
+	if not _hidden_entries.has(crop_name):
+		_hidden_entries[crop_name] = []
+	_hidden_entries[crop_name].append(node)
+
+
+func _reveal_hidden_entries(crop_name: String) -> void:
+	var nodes: Array = _hidden_entries.get(crop_name, [])
+	for node in nodes:
+		var item := node as CanvasItem
+		if item == null or not is_instance_valid(item):
+			continue
+		var t := item.create_tween()
+		t.tween_property(item, "modulate:a", 1.0, 0.45)
+	_hidden_entries.erase(crop_name)
+
+
+## 掉落隐藏作物，带假随机保底：概率 p 时每 ceil(1/p) 次必定爆一次
+## （p=0.03 → 34 次内必出；p=0.01 → 100 次内必出）
+## rng_value 用来在测试里注入确定值，<0 表示现掷
+func roll_hidden_drop(crop_name: String, chance: float, rng_value: float = -1.0) -> bool:
+	if crop_name == "" or chance <= 0.0:
+		return false
+	var pity_limit := maxi(1, ceili(1.0 / chance))
+	var tries: int = _drop_pity.get(crop_name, 0) + 1
+	var roll: float = randf() if rng_value < 0.0 else rng_value
+	var hit: bool = roll < chance or tries >= pity_limit
+	if hit:
+		_drop_pity[crop_name] = 0
+		add_stock(crop_name, 1)
+	else:
+		_drop_pity[crop_name] = tries
+	return hit
 
 
 func _on_tick() -> void:
@@ -482,6 +535,11 @@ func _end_day() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	# F11（或 Alt+Enter）全屏 / 窗口切换：默认全屏启动，小屏上想回窗口化时用这个
 	if event is InputEventKey and event.pressed and not event.echo:
+		# Ctrl+D：开关隐藏调试面板（测金花概率用）
+		if event.keycode == KEY_D and event.ctrl_pressed:
+			toggle_debug_panel()
+			get_viewport().set_input_as_handled()
+			return
 		if event.keycode == KEY_F11 or (event.keycode == KEY_ENTER and event.alt_pressed):
 			var window := get_window()
 			window.mode = Window.MODE_WINDOWED if window.mode == Window.MODE_FULLSCREEN else Window.MODE_FULLSCREEN
@@ -549,3 +607,163 @@ func _unhandled_input(event: InputEvent) -> void:
 						crop.position = map_soil.map_to_local(coord)
 						crop_dict[coord] = crop
 						empty_soil_days.erase(coord)
+
+
+## —— 隐藏调试面板（Ctrl+D）——
+## 给测试用：把金花分母改成 1/N（填 100 = 1/100），并统计实测爆率。
+var debug_panel: Control
+var debug_denominator_edit: LineEdit
+var debug_stats_label: Label
+var dbg_rolls: int = 0
+var dbg_goldens: int = 0
+var debug_golden_denominator: int = 33
+var _golden_defaults: Dictionary = {}
+
+
+func toggle_debug_panel() -> void:
+	if debug_panel == null:
+		_build_debug_panel()
+	debug_panel.visible = not debug_panel.visible
+	if debug_panel.visible:
+		_refresh_debug_stats()
+
+
+func _build_debug_panel() -> void:
+	if _golden_defaults.is_empty():
+		for crop in crop_datas:
+			if crop.golden_chance > 0.0:
+				_golden_defaults[crop.name] = crop.golden_chance
+				debug_golden_denominator = maxi(1, int(round(1.0 / crop.golden_chance)))
+
+	var layer := CanvasLayer.new()
+	layer.name = "DebugLayer"
+	layer.layer = 9
+	add_child(layer)
+
+	var panel := Panel.new()
+	panel.name = "DebugPanel"
+	panel.position = Vector2(3, 3)
+	panel.size = Vector2(212, 74)
+	panel.visible = false
+	layer.add_child(panel)
+	debug_panel = panel
+
+	var sb := StyleBoxFlat.new()
+	sb.bg_color = Color(0.08, 0.09, 0.08, 0.92)
+	sb.border_width_left = 1
+	sb.border_width_top = 1
+	sb.border_width_right = 1
+	sb.border_width_bottom = 1
+	sb.border_color = Color(0.44, 0.32, 0.22, 1.0)
+	panel.add_theme_stylebox_override("panel", sb)
+
+	var box := VBoxContainer.new()
+	box.set_anchors_preset(Control.PRESET_FULL_RECT)
+	box.offset_left = 5
+	box.offset_top = 4
+	box.offset_right = -5
+	box.offset_bottom = -4
+	box.add_theme_constant_override("separation", 3)
+	panel.add_child(box)
+
+	var title := Label.new()
+	title.text = "调试：金花概率（Ctrl+D 开关）"
+	title.add_theme_font_size_override("font_size", 8)
+	title.add_theme_color_override("font_color", Color(0.95, 0.78, 0.5))
+	box.add_child(title)
+
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 3)
+	box.add_child(row)
+
+	var label_a := Label.new()
+	label_a.text = "1 /"
+	label_a.add_theme_font_size_override("font_size", 8)
+	row.add_child(label_a)
+
+	debug_denominator_edit = LineEdit.new()
+	debug_denominator_edit.text = str(debug_golden_denominator)
+	debug_denominator_edit.custom_minimum_size = Vector2(44, 12)
+	debug_denominator_edit.add_theme_font_size_override("font_size", 8)
+	debug_denominator_edit.text_submitted.connect(func(_t: String) -> void: _apply_debug_denominator())
+	debug_denominator_edit.focus_exited.connect(func() -> void: _apply_debug_denominator())
+	row.add_child(debug_denominator_edit)
+
+	var label_b := Label.new()
+	label_b.text = "（填 100 = 1/100）"
+	label_b.add_theme_font_size_override("font_size", 8)
+	label_b.add_theme_color_override("font_color", Color(0.75, 0.72, 0.66))
+	row.add_child(label_b)
+
+	debug_stats_label = Label.new()
+	debug_stats_label.add_theme_font_size_override("font_size", 8)
+	box.add_child(debug_stats_label)
+
+	var row2 := HBoxContainer.new()
+	row2.add_theme_constant_override("separation", 4)
+	box.add_child(row2)
+
+	var reset := Button.new()
+	reset.text = "重置统计"
+	reset.add_theme_font_size_override("font_size", 8)
+	reset.custom_minimum_size = Vector2(52, 14)
+	reset.pressed.connect(func() -> void:
+		dbg_rolls = 0
+		dbg_goldens = 0
+		_refresh_debug_stats())
+	row2.add_child(reset)
+
+	var restore := Button.new()
+	restore.text = "恢复默认概率"
+	restore.add_theme_font_size_override("font_size", 8)
+	restore.custom_minimum_size = Vector2(66, 14)
+	restore.pressed.connect(_restore_golden_defaults)
+	row2.add_child(restore)
+
+	_refresh_debug_stats()
+
+
+func _apply_debug_denominator() -> void:
+	if debug_denominator_edit == null:
+		return
+	var n := int(debug_denominator_edit.text.strip_edges().to_int())
+	n = clampi(n, 1, 100000)
+	debug_denominator_edit.text = str(n)
+	debug_golden_denominator = n
+	var chance := 1.0 / float(n)
+	for crop in crop_datas:
+		if crop.golden_chance > 0.0 or crop.name in _golden_defaults:
+			crop.golden_chance = chance
+	_refresh_debug_stats()
+
+
+func _restore_golden_defaults() -> void:
+	for crop in crop_datas:
+		if _golden_defaults.has(crop.name):
+			crop.golden_chance = _golden_defaults[crop.name]
+			debug_golden_denominator = maxi(1, int(round(1.0 / crop.golden_chance)))
+	if debug_denominator_edit != null:
+		debug_denominator_edit.text = str(debug_golden_denominator)
+	_refresh_debug_stats()
+
+
+## 作物每次掷金花都会调这里，面板据此算实测概率
+func debug_register_golden_roll(hit: bool) -> void:
+	dbg_rolls += 1
+	if hit:
+		dbg_goldens += 1
+	_refresh_debug_stats()
+
+
+func _refresh_debug_stats() -> void:
+	if debug_stats_label == null:
+		return
+	var rate := 0.0 if dbg_rolls == 0 else 100.0 * float(dbg_goldens) / float(dbg_rolls)
+	var cur := 0.0
+	for crop in crop_datas:
+		if crop.golden_chance > 0.0:
+			cur = crop.golden_chance
+			break
+	debug_stats_label.text = "掷 %d 次 · 金花 %d 株 · 实测 %.1f%%（当前 1/%d）" % [
+		dbg_rolls, dbg_goldens, rate, maxi(1, int(round(1.0 / cur))) if cur > 0.0 else 0
+	]
