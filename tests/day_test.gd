@@ -31,6 +31,8 @@ func _ready() -> void:
 	_test_bgm()
 	_test_watered_soil_not_aging()
 	_test_input_events()
+	await _test_hidden_crop()
+	_test_debug_panel()
 	await _test_clear_withered()
 	await _test_absorb_ghost()
 
@@ -347,3 +349,139 @@ func _test_bgm() -> void:
 	_check("时长 > 5 秒", stream.get_length() > 5.0, "%.1f 秒" % stream.get_length())
 	_check("autoplay 已开启", player.autoplay == true)
 	_check("正在播放", player.playing == true)
+
+
+# ── N. 隐藏作物：薄荷 3% 掉落、保底、库存项隐形 ─────────────────
+func _test_hidden_crop() -> void:
+	print("\n[N] 隐藏作物（蓝薄荷）")
+	var blue: CropData = null
+	for d in Game.crop_datas:
+		if d.name == "bluemint":
+			blue = d
+	_check("crop_datas 里有 bluemint", blue != null)
+	if blue == null:
+		return
+	_check("不可种植（不进种子栏）", blue.plantable == false)
+	_check("标记为拿到前隐形", blue.hidden_until_obtained == true)
+
+	var seed_names := []
+	for child in Game.seed_selection_pool.get_children():
+		if child is ToolSelection and child.seed_data != null:
+			seed_names.append(child.seed_data.name)
+	_check("种子栏里没有 bluemint", not seed_names.has("bluemint"), str(seed_names))
+
+	var label := Game.stock_pool.get_node_or_null(^"bluemint") as StockLabel
+	_check("收成栏里有 bluemint 项", label != null)
+	if label != null:
+		_check("收成项完全隐形（modulate.a = 0）", label.modulate.a == 0.0,
+			"alpha=%.2f" % label.modulate.a)
+
+	# 薄荷数据里确实挂了掉落
+	var mint_data: CropData = Game.crop_datas[4]
+	_check("薄荷挂了 bluemint 掉落", mint_data.hidden_drop == "bluemint" and
+		is_equal_approx(mint_data.hidden_drop_chance, 0.03),
+		"%s / %.2f" % [mint_data.hidden_drop, mint_data.hidden_drop_chance])
+
+	# 保底：p=0.03 → ceil(1/0.03)=34 次内必爆；用 rng=0.99 让前 33 次都空
+	var p := 0.03
+	var limit := ceili(1.0 / p)
+	Game._drop_pity.erase("bluemint")   # 前面的薄荷收获也在攒保底，这里清零再测
+	var stock_before: int = Game.stock.get("bluemint", 0)
+	var hits := 0
+	var first_hit_at := -1
+	for i in range(limit):
+		if Game.roll_hidden_drop("bluemint", p, 0.99):
+			hits += 1
+			if first_hit_at < 0:
+				first_hit_at = i + 1
+	_check("第 %d 次一定爆（保底）" % limit, hits == 1 and first_hit_at == limit,
+		"hits=%d first=%d" % [hits, first_hit_at])
+	_check("掉落进了库存", Game.stock.get("bluemint", 0) == stock_before + 1,
+		"库存 %d → %d" % [stock_before, Game.stock.get("bluemint", 0)])
+
+	await get_tree().create_timer(0.6).timeout
+	if label != null:
+		_check("拿到后收成项显现", label.modulate.a > 0.99, "alpha=%.2f" % label.modulate.a)
+
+	# 统计校验：1000 次里任意两次掉落的间隔不能超过保底次数
+	var gap := 0
+	var max_gap := 0
+	var total := 0
+	for i in range(1000):
+		gap += 1
+		if Game.roll_hidden_drop("bluemint", p):
+			max_gap = maxi(max_gap, gap)
+			gap = 0
+			total += 1
+	_check("1000 次内最大间隔 ≤ %d" % limit, max_gap <= limit,
+		"max_gap=%d，期间掉了 %d 次" % [max_gap, total])
+
+	# 薄荷收获确实会走掉落逻辑
+	var pity_before: int = Game._drop_pity.get("bluemint", 0)
+	var coord := Vector2i(12, 0)
+	var crop := _plant(mint_data, coord)
+	for i in range(crop.mature_stage()):
+		_water(coord)
+		Game._end_day()
+	crop.harvest()
+	var pity_after: int = Game._drop_pity.get("bluemint", 0)
+	_check("收获薄荷会掷一次掉落（保底计数变化或直接出货）",
+		pity_after != pity_before or Game.stock.get("bluemint", 0) > stock_before + 1,
+		"pity %d → %d" % [pity_before, pity_after])
+
+
+# ── O. 隐藏调试面板（Ctrl+D）：金花概率可调 + 实测统计 ─────────────
+func _test_debug_panel() -> void:
+	print("\n[O] 隐藏调试面板")
+	var open_key := InputEventKey.new()
+	open_key.keycode = KEY_D
+	open_key.ctrl_pressed = true
+	open_key.pressed = true
+	Game._unhandled_input(open_key)
+	_check("Ctrl+D 打开面板", Game.debug_panel != null and Game.debug_panel.visible)
+
+	Game.debug_denominator_edit.text = "100"
+	Game._apply_debug_denominator()
+	var mint_data: CropData = Game.crop_datas[4]
+	_check("填 100 → 金花概率 1/100", is_equal_approx(mint_data.golden_chance, 0.01),
+		"%.4f" % mint_data.golden_chance)
+
+	Game.debug_denominator_edit.text = "50"
+	Game._apply_debug_denominator()
+	_check("填 50 → 1/50", is_equal_approx(mint_data.golden_chance, 0.02),
+		"%.4f" % mint_data.golden_chance)
+
+	Game.debug_denominator_edit.text = "0"
+	Game._apply_debug_denominator()
+	_check("填 0 会被夹到 1（100% 金花）", is_equal_approx(mint_data.golden_chance, 1.0),
+		"%.4f" % mint_data.golden_chance)
+
+	var rolls_before := Game.dbg_rolls
+	var goldens_before := Game.dbg_goldens
+	Game.debug_register_golden_roll(true)
+	Game.debug_register_golden_roll(false)
+	_check("统计会累加", Game.dbg_rolls == rolls_before + 2 and Game.dbg_goldens == goldens_before + 1,
+		"掷 %d / 金花 %d" % [Game.dbg_rolls, Game.dbg_goldens])
+	_check("面板显示实测概率", Game.debug_stats_label.text.contains("实测"),
+		Game.debug_stats_label.text)
+
+	Game._restore_golden_defaults()
+	_check("恢复默认（1/33 ≈ 3%）", is_equal_approx(mint_data.golden_chance, 0.03),
+		"%.4f" % mint_data.golden_chance)
+
+	var close_key := InputEventKey.new()
+	close_key.keycode = KEY_D
+	close_key.ctrl_pressed = true
+	close_key.pressed = true
+	Game._unhandled_input(close_key)
+	_check("再按一次 Ctrl+D 关闭", not Game.debug_panel.visible)
+
+	# 作物成熟时确实会掷一次并被统计
+	var coord := Vector2i(13, 0)
+	var crop := _plant(mint_data, coord)
+	var before := Game.dbg_rolls
+	for i in range(crop.mature_stage()):
+		_water(coord)
+		Game._end_day()
+	_check("薄荷成熟时掷了一次并计入统计", Game.dbg_rolls == before + 1,
+		"%d → %d" % [before, Game.dbg_rolls])

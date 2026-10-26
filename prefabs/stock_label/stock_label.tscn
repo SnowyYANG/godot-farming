@@ -20,7 +20,7 @@ texture = SubResource("AtlasTexture_t36vy")
 expand_mode = 0
 
 [node name="Label_Number" type="Label" parent="." unique_id=1573524532]
-custom_minimum_size = Vector2(6, 0)
+custom_minimum_size = Vector2(4, 0)
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 4

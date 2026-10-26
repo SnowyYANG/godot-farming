@@ -92,7 +92,10 @@ func advance_day() -> void:
 func _roll_golden() -> void:
 	if not is_mature() or data.golden_chance <= 0.0 or data.golden.is_empty():
 		return
-	if randf() >= data.golden_chance:
+	var hit := randf() < data.golden_chance
+	# 调试面板统计：每次真实掷骰都记一笔（分母可在 Ctrl+D 面板里改）
+	Game.debug_register_golden_roll(hit)
+	if not hit:
 		return
 	is_golden = true
 	# 只改这一株：SpriteFrames 是场景里的共享资源，直接 set_frame 会把
@@ -139,6 +142,9 @@ func harvest() -> void:
 
 	var amount: int = data.yield_amount * (2 if is_golden else 1)
 	Game.add_stock(data.name, amount)
+	# 隐藏作物掉落（带保底），比如薄荷有 3% 概率掉"蓝薄荷"
+	if data.hidden_drop != "" and data.hidden_drop_chance > 0.0:
+		Game.roll_hidden_drop(data.hidden_drop, data.hidden_drop_chance)
 
 	# 收获瞬间的形态
 	ripe_days = 0
