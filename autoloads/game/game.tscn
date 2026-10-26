@@ -11,6 +11,7 @@
 [ext_resource type="Resource" uid="uid://bm5rbabisrkey" path="res://data/crops/radish.tres" id="22_radish"]
 [ext_resource type="Resource" uid="uid://cyk7ofeg0y3tf" path="res://data/crops/potato.tres" id="23_potato"]
 [ext_resource type="Resource" uid="uid://c3d7g8phdpb62" path="res://data/crops/mint.tres" id="24_mint"]
+[ext_resource type="Resource" path="res://data/crops/bluemint.tres" id="25_bluemint"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_ryrav"]
 atlas = ExtResource("6_tools")
@@ -34,7 +35,7 @@ map_wet_soil = NodePath("WetSoil")
 tool_selection_pool = NodePath("CanvasLayer/MarginContainer/Control/ToolSelectionPool")
 seed_selection_pool = NodePath("CanvasLayer/MarginContainer/Control/SeedSelectionPool")
 crop_pool = NodePath("CropPool")
-crop_datas = Array[ExtResource("2_60txh")]([ExtResource("20_cabbage"), ExtResource("21_mushroom"), ExtResource("22_radish"), ExtResource("23_potato"), ExtResource("24_mint")])
+crop_datas = Array[ExtResource("2_60txh")]([ExtResource("20_cabbage"), ExtResource("21_mushroom"), ExtResource("22_radish"), ExtResource("23_potato"), ExtResource("24_mint"), ExtResource("25_bluemint")])
 progress_time = NodePath("CanvasLayer/MarginContainer/Control/ProgressBar_Time")
 timer_time = NodePath("Timer_Time")
 stock_pool = NodePath("CanvasLayer/MarginContainer/Control/StockPool")
