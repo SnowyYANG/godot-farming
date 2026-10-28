@@ -95,6 +95,10 @@ region = Rect2(160, 112, 16, 16)
 atlas = ExtResource("1_sheet")
 region = Rect2(192, 112, 16, 16)
 
+[sub_resource type="AtlasTexture" id="potato_5"]
+atlas = ExtResource("1_sheet")
+region = Rect2(224, 112, 16, 16)
+
 [sub_resource type="AtlasTexture" id="radish_0"]
 atlas = ExtResource("1_sheet")
 region = Rect2(64, 80, 16, 16)
@@ -210,6 +214,12 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("potato_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("potato_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("potato_5")
 }],
 "loop": 0,
 "name": &"potato",
