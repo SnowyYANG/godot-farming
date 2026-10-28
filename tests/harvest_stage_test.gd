@@ -22,9 +22,24 @@ func _ready() -> void:
 			continue
 		var last := crop.last_stage()
 		var mature := crop.mature_stage()
-		_check("%s: 成果帧 = %d（最后一帧 %d）" % [data.name, mature, last],
-			mature == last - 1 and last >= 1)
+		var want := last if data.matured_at_last_frame else last - 1
+		_check("%s: 成果帧 = %d（最后一帧 %d，期望 %d）" % [data.name, mature, last, want],
+			mature == want and last >= 1)
 		crop.free()
+
+	# 土豆：成果帧和收成栏图标都必须是素材里的那堆土豆 (224,112)
+	for data in Game.crop_datas:
+		if data.name != "potato":
+			continue
+		var pcrop := _spawn_prefab(data)
+		var tex: AtlasTexture = pcrop.sprite_frames.get_frame_texture(data.name, pcrop.mature_stage())
+		_check("potato: 成果帧是土豆堆 (224,112)",
+			tex != null and tex.region == Rect2(224, 112, 16, 16),
+			"region=%s" % (tex.region if tex != null else "null"))
+		_check("potato: 收成栏图标是土豆堆",
+			data.stages[data.stages.size() - 1].region == Rect2(224, 112, 16, 16),
+			"icon=%s" % data.stages[data.stages.size() - 1].region)
+		pcrop.free()
 
 	print("\n[B] 一天一浇水，长到成果状态就停住")
 	var data0: CropData = Game.crop_datas[0]          # cabbage，一次性收获

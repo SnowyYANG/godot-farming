@@ -7,12 +7,17 @@ const DRY_DAYS_TO_DIE := 3
 ## 成熟后放着不收获，第 3 天结算就过熟枯萎（和"2 天不管 → 第 3 天"的其它规则一致）
 const RIPE_DAYS_TO_WITHER := 3
 
+## 枯萎后没人点，放 3 天也自己消失（和"点一下立刻渐隐"走同一段动画）
+const WITHERED_DAYS_TO_GONE := 3
+
 var coord: Vector2i
 var data: CropData
 var dry_days: int = 0
 ## 成熟后已经放了多少天没收获
 var ripe_days: int = 0
 var is_withered := false
+## 枯萎之后又放了多少天（到 WITHERED_DAYS_TO_GONE 就自己消失）
+var withered_days: int = 0
 var is_golden := false
 var gone := false
 
@@ -56,6 +61,9 @@ func last_stage() -> int:
 ## 可收获的"成果状态" = 倒数第二帧。最后一帧是"收获瞬间"的样子：
 ## 点下去先切到最后一帧，再从这一帧吸进对应的收成库存。
 func mature_stage() -> int:
+	# 土豆这类：最后一帧就是成熟形态（那堆露出来的土豆），没有单独的收获帧
+	if data != null and data.matured_at_last_frame:
+		return maxi(last_stage(), 0)
 	return maxi(last_stage() - 1, 0)
 
 
@@ -65,7 +73,14 @@ func is_mature() -> bool:
 
 ## 每天结束调用一次
 func advance_day() -> void:
-	if gone or is_withered:
+	if gone:
+		return
+
+	# 已经枯萎：没人点也会自己烂掉，第 3 天结算就消失
+	if is_withered:
+		withered_days += 1
+		if withered_days >= WITHERED_DAYS_TO_GONE:
+			clear_withered()
 		return
 
 	# 已经成熟：只看"放了几天没收获"，浇水不再延命

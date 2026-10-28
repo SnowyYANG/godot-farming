@@ -217,9 +217,6 @@ animations = [{
 }, {
 "duration": 1.0,
 "texture": SubResource("potato_5")
-}, {
-"duration": 1.0,
-"texture": SubResource("potato_5")
 }],
 "loop": 0,
 "name": &"potato",
