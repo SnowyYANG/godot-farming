@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://c4wbx5p6nbe31"
-path="res://.godot/imported/Tilled Soil and wet soil.png-ad8b77559e06c8890d968f140bd693f7.ctex"
+path="res://.godot/imported/tiles_soil.png-481e3bda6006913120be0b63530a26e1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/tilesets/Tilled Soil and wet soil.png"
-dest_files=["res://.godot/imported/Tilled Soil and wet soil.png-ad8b77559e06c8890d968f140bd693f7.ctex"]
+source_file="res://assets/tilesets/tiles_soil.png"
+dest_files=["res://.godot/imported/tiles_soil.png-481e3bda6006913120be0b63530a26e1.ctex"]
 
 [params]
 
