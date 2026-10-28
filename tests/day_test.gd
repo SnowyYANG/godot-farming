@@ -32,6 +32,7 @@ func _ready() -> void:
 	_test_watered_soil_not_aging()
 	_test_input_events()
 	await _test_hidden_crop()
+	await _test_withered_auto_gone()
 	_test_debug_panel()
 	await _test_clear_withered()
 	await _test_absorb_ghost()
@@ -485,3 +486,37 @@ func _test_debug_panel() -> void:
 		Game._end_day()
 	_check("薄荷成熟时掷了一次并计入统计", Game.dbg_rolls == before + 1,
 		"%d → %d" % [before, Game.dbg_rolls])
+
+
+# ── P. 枯萎后放着不管，第 3 天也自己消失 ──────────────────────
+func _test_withered_auto_gone() -> void:
+	print("\n[P] 枯萎后放 3 天自动消失")
+	var cabbage: CropData = Game.crop_datas[0]
+	var coord := Vector2i(14, 0)
+	var crop := _plant(cabbage, coord)
+	var stock_before: int = Game.stock.get("cabbage", 0)
+
+	# 先浇一天长出苗（种子没水会直接消失，不会枯萎），然后连续 3 天不浇 → 枯萎
+	_water(coord)
+	Game._end_day()
+	_check("先长出苗", crop.frame > 0, "frame=%d" % crop.frame)
+	for i in range(3):
+		Game._end_day()
+	_check("先枯萎（3 天没水）", crop.is_withered and not crop.gone,
+		"withered=%s gone=%s" % [crop.is_withered, crop.gone])
+
+	Game._end_day()
+	_check("枯萎后第 1 天还在", is_instance_valid(crop) and not crop.gone,
+		"withered_days=%d" % crop.withered_days)
+	Game._end_day()
+	_check("枯萎后第 2 天还在", is_instance_valid(crop) and not crop.gone,
+		"withered_days=%d" % crop.withered_days)
+
+	Game._end_day()
+	_check("枯萎后第 3 天从 crop_dict 移除", not Game.crop_dict.has(coord),
+		"withered_days=%d" % crop.withered_days)
+
+	await get_tree().create_timer(0.7).timeout
+	_check("淡出结束后被销毁", not is_instance_valid(crop))
+	_check("枯萎消失没有产出", Game.stock.get("cabbage", 0) == stock_before,
+		"库存 %d → %d" % [stock_before, Game.stock.get("cabbage", 0)])
