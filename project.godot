@@ -23,7 +23,7 @@ resources_spreadsheet_view/freeze_first_column=true
 
 [application]
 
-config/name="zhongtian"
+config/name="Godot FarmingGame Example"
 run/main_scene="res://main_scene.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
